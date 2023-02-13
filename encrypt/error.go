@@ -1,4 +1,4 @@
-package age
+package encrypt
 
 import (
 	"errors"
@@ -6,8 +6,8 @@ import (
 
 var (
 
-	// ErrGetKey is returned when there is an error getting a key.
-	ErrGetKey = errors.New("get key failed")
+	// ErrEncrypt is returned when there is an error encrypting something.
+	ErrEncrypt = errors.New("encryption failed")
 )
 
 // Error contains the Cause and RootCause of an error.
