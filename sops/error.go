@@ -1,10 +1,16 @@
-package age
+package sops
 
 import (
 	"errors"
 )
 
 var (
+
+	// ErrEncode is returned when there is an error encoding something.
+	ErrEncode = errors.New("encode failed")
+
+	// ErrDecode is returned when there is an error decoding something.
+	ErrDecode = errors.New("decode failed")
 
 	// ErrGetKey is returned when there is an error getting a key.
 	ErrGetKey = errors.New("get key failed")

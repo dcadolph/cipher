@@ -1,9 +1,11 @@
-package encrypt
+package sops
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 
+	"github.com/dcadolph/cipher/encode"
 	"go.mozilla.org/sops/v3"
 	"go.mozilla.org/sops/v3/aes"
 	"go.mozilla.org/sops/v3/cmd/sops/common"
@@ -19,7 +21,7 @@ type encoder struct {
 	keyGroups []sops.KeyGroup
 }
 
-// NewEncoder returns a new SOPS encryption encoder.
+// Encoder returns a new SOPS encryption encode.Encoder.
 //
 // Regex is the encryption regex, which dictates what parts of a file should be encrypted.
 //
@@ -27,7 +29,7 @@ type encoder struct {
 // sops.KeyGroup is slice of age.MasterKey).
 //
 // Constructor panics if regex is nil or if key groups is empty.
-func NewEncoder(regex *regexp.Regexp, keyGroups []sops.KeyGroup) Encoder {
+func Encoder(regex *regexp.Regexp, keyGroups []sops.KeyGroup) encode.Encoder {
 
 	if regex == nil {
 		panic("encrypt walk: regex required")
@@ -48,16 +50,16 @@ func NewEncoder(regex *regexp.Regexp, keyGroups []sops.KeyGroup) Encoder {
 // Encode SOPS-encrypts a file.
 //
 // If there is nothing to encrypt (e.g. there are no branches to encrypt, or nothing in the file
-// matches the regular expression, the file data is returned unmodified.
+// matches the regular expression), the file data is returned unmodified.
 //
 // File input format and output format is based on a given file's extension. For more, see
 // formats.FormatForPath.
 //
 // If a file has a YAML extension, but contains a JSON object, the result will be written as
-// a YAML object. If a file has a JSON extension, but contains YAML, ErrEncrypt will be returned.
-func (e *encoder) Encode(fileName string, fileData []byte) ([]byte, error) {
+// a YAML object. If a file has a JSON extension, but contains YAML, ErrEncode will be returned.
+func (e *encoder) Encode(fileName string) ([]byte, error) {
 
-	b, err := e.encryptedBytes(fileName, fileData)
+	b, err := e.encryptedBytes(fileName)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +68,15 @@ func (e *encoder) Encode(fileName string, fileData []byte) ([]byte, error) {
 }
 
 // encryptedBytes returns encrypted file data.
-func (e *encoder) encryptedBytes(fileName string, fileData []byte) ([]byte, error) {
+func (e *encoder) encryptedBytes(fileName string) ([]byte, error) {
+
+	fileData, readErr := os.ReadFile(fileName)
+	if readErr != nil {
+		return nil, &Error{
+			Cause:     fmt.Errorf("reading file from %s: %w", fileName, ErrEncode),
+			RootCause: readErr,
+		}
+	}
 
 	inputStore := common.StoreForFormat(formats.FormatForPath(fileName))
 	outputStore := common.StoreForFormat(formats.FormatForPath(fileName))
@@ -74,7 +84,11 @@ func (e *encoder) encryptedBytes(fileName string, fileData []byte) ([]byte, erro
 	branches, branchesErr := inputStore.LoadPlainFile(fileData)
 	if branchesErr != nil {
 		return nil, &Error{
-			Cause:     fmt.Errorf("loading plain file %s tree branches: %w", fileName, ErrEncrypt),
+			Cause: fmt.Errorf(
+				"loading plain file %s tree branches: %w",
+				fileName,
+				ErrEncode,
+			),
 			RootCause: branchesErr,
 		}
 	}
@@ -90,7 +104,7 @@ func (e *encoder) encryptedBytes(fileName string, fileData []byte) ([]byte, erro
 				return nil, &Error{
 					Cause: fmt.Errorf(
 						"%w: tree branch %d of %d in file %s is already encrypted",
-						ErrEncrypt,
+						ErrEncode,
 						index+1,
 						len(branches),
 						fileName,
@@ -117,7 +131,7 @@ func (e *encoder) encryptedBytes(fileName string, fileData []byte) ([]byte, erro
 	)
 	if genErr != nil {
 		return nil, &Error{
-			Cause: fmt.Errorf("%w: failed to generate data key for %s", ErrEncrypt, fileName),
+			Cause: fmt.Errorf("%w: failed to generate data key for %s", ErrEncode, fileName),
 			//RootCause: errors.Join(genErr...),
 		}
 	}
@@ -128,7 +142,7 @@ func (e *encoder) encryptedBytes(fileName string, fileData []byte) ([]byte, erro
 		Cipher:  e.cipher,
 	}); err != nil {
 		return nil, &Error{
-			Cause:     fmt.Errorf("%w: failed to encrypt %s", ErrEncrypt, fileName),
+			Cause:     fmt.Errorf("%w: failed to encrypt %s", ErrEncode, fileName),
 			RootCause: err,
 		}
 	}
@@ -136,7 +150,7 @@ func (e *encoder) encryptedBytes(fileName string, fileData []byte) ([]byte, erro
 	b, emitErr := outputStore.EmitEncryptedFile(tree)
 	if emitErr != nil {
 		return nil, &Error{
-			Cause:     fmt.Errorf("emitting encrypted file %s: %w", fileName, ErrEncrypt),
+			Cause:     fmt.Errorf("emitting encrypted file %s: %w", fileName, ErrEncode),
 			RootCause: emitErr,
 		}
 	}
