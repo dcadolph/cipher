@@ -11,6 +11,8 @@ import (
 const SopsPrivateKeyENV = "SOPS_AGE_KEY"
 
 // Decoder returns a SOPS decode.Decoder for decrypting age-encrypted files.
+//
+// Call panics if age private key is empty.
 func Decoder(agePrivateKey string) decode.Decoder {
 
 	if agePrivateKey == "" {

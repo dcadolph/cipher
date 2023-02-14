@@ -11,6 +11,9 @@ import (
 // DecodeWalker returns a filepath.WalkFunc that decrypts files on disk using SOPS decryption.
 //
 // file.SkipFunc dictate which files should not be decoded (remain encrypted if encrypted).
+//
+// DecodeWalker works "out of the box" for most SOPS-encrypted data, but for age key encryption,
+// consumer must call age.DecodeWalker.
 func DecodeWalker(sf ...file.SkipFunc) filepath.WalkFunc {
 
 	decoder := Decoder()
