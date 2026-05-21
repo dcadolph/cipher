@@ -5,20 +5,30 @@
 # cipher
 
 A Go library and CLI for [sops](https://github.com/getsops/sops) that fills
-the gap sops itself left open: **programmatic encryption**, key rotation,
-recipient management, and a project-wide pre-commit safety net.
+the gap sops itself left open. It adds:
 
-Sops ships a stable Go API for **decryption only** (`decrypt.File` /
-`decrypt.Data`). Programmatic **encryption** requires assembling a
-`sops.Tree`, building `KeyGroups`, picking a `Cipher`, calling internal
-helpers under `cmd/sops/common`, and emitting via a per-format store —
-the exact ~50 lines of boilerplate that has been copy-pasted from
+- programmatic encryption
+- key rotation
+- recipient management
+- a project-wide pre-commit safety net
+
+Sops ships a stable Go API for decryption only (`decrypt.File` and
+`decrypt.Data`). Programmatic encryption is not part of that stable
+surface. To encrypt from Go today, you have to assemble a `sops.Tree`,
+build `KeyGroups`, pick a `Cipher`, call internal helpers under
+`cmd/sops/common`, and emit through a per-format store. That is roughly
+fifty lines of boilerplate. It has been copy-pasted from
 [issue #1094](https://github.com/getsops/sops/issues/1094) for years.
 
-cipher collapses all of that — and the operations that come after
-encryption (rotate, add/remove recipients, walk a directory in parallel,
-edit a file in `$EDITOR`, drive everything from `.sops.yaml`) — into a
-small set of single-method interfaces with sensible defaults.
+cipher collapses all of that into a small set of single-method
+interfaces with sensible defaults. It also covers the operations that
+come after encryption:
+
+- rotate the data key
+- add or remove recipients
+- walk a directory in parallel
+- edit a file in `$EDITOR`
+- drive everything from `.sops.yaml`
 
 ```go
 enc := cipher.NewEncoder(age.NewProvider("age1qyqsz..."))
@@ -29,29 +39,29 @@ ciphertext, err := enc.Encode(ctx, "secrets.yaml", plain)
 
 | Capability | API |
 | ---------- | --- |
-| Encrypt/decrypt a single file in memory | `Encoder.Encode`, `Decoder.Decode` |
+| Encrypt or decrypt a single file in memory | `Encoder.Encode`, `Decoder.Decode` |
 | Walk a directory tree (sequential or parallel) | `EncodeWalk`, `DecodeWalk`, `RotateWalk` |
-| Decrypt → mutate → re-encrypt atomically | `Edit`, `EditWith` |
+| Decrypt, mutate, re-encrypt atomically | `Edit`, `EditWith` |
 | Rotate the data key (new ciphertext, same recipients) | `Rotate`, `RotateWalk` |
 | Add a recipient without re-encrypting the payload | `AddRecipient` |
 | Revoke a recipient | `RemoveRecipient` |
-| List recipients/metadata without decrypting | `Inspect`, `InspectPath` |
+| List recipients and metadata without decrypting | `Inspect`, `InspectPath` |
 | Diff recipients across two encrypted versions | `DiffRecipients`, `DiffRecipientsPath` |
 | Detect already-encrypted files | `IsEncrypted`, `IsEncryptedPath` |
 | Route per-path key selection from `.sops.yaml` | `sopsconfig.Config.Router`, `NewRoutedEncoder` |
-| Shamir-threshold rule builder | `NewShamirRule` |
+| Shamir threshold rule builder | `NewShamirRule` |
 | Backup originals on write | `WalkOptions.BackupSuffix`, `EditOptions.BackupSuffix` |
 | Reject plaintext secrets in git | `precommit.Checker`, `cipher precommit` |
-| HTTP middleware (decrypt body / encrypt response) | `cipher/httpmw` |
+| HTTP middleware | `cipher/httpmw` |
 | OpenTelemetry tracing | `cipher/otelcipher` |
-| Test helpers (age identity + round-trip assertions) | `cipher/ciphertest` |
+| Test helpers | `cipher/ciphertest` |
 | Size guard against oversized inputs | `EncoderOptions.MaxPlaintextBytes` |
-| End-to-end CLI | `cmd/cipher` (encrypt / decrypt / edit / rotate / walk / add-recipient / remove-recipient / precommit) |
+| End-to-end CLI | `cmd/cipher` |
 
 ## Backends
 
 Every backend implements one interface (`KeyProvider`) and lives in its
-own subpackage. Compose them, swap them, mix them:
+own subpackage. Compose them, swap them, mix them.
 
 | Backend | Subpackage | Constructor |
 | ------- | ---------- | ----------- |
@@ -62,8 +72,11 @@ own subpackage. Compose them, swap them, mix them:
 | Azure Key Vault | `cipher/azkv` | `azkv.NewProvider(urls...)` |
 | GPG / PGP | `cipher/pgp` | `pgp.NewProvider(fingerprints...)` |
 
-Wrap multiple backends in a single key group with `cipher.MergeProviders`,
-or use `cipher.ChainKeyProviders` to feed them as separate groups.
+To combine backends:
+
+- `cipher.MergeProviders` puts every backend's keys into a single key
+  group.
+- `cipher.ChainKeyProviders` keeps each backend in its own key group.
 
 ## Install
 
@@ -91,11 +104,17 @@ dec := cipher.NewDecoder()
 plain, err := dec.Decode(ctx, "secrets.yaml", ciphertext)
 ```
 
-`Decoder` uses the standard sops identity sources (`SOPS_AGE_KEY`,
-`SOPS_AGE_KEY_FILE`, AWS credentials, etc.) — the same env that drives
-the `sops` binary works here.
+`Decoder` uses the standard sops identity sources:
 
-### Walk a directory (with bounded parallelism)
+- `SOPS_AGE_KEY`
+- `SOPS_AGE_KEY_FILE`
+- AWS credentials
+- GCP credentials
+- and so on
+
+The same environment that drives the `sops` binary works here.
+
+### Walk a directory with bounded parallelism
 
 ```go
 err := cipher.EncodeWalkWith(
@@ -110,8 +129,9 @@ err := cipher.EncodeWalkWith(
 )
 ```
 
-Already-encrypted files are skipped. Files are written atomically
-(temp + rename) so a failed write never leaves a half-encrypted secret.
+Already-encrypted files are skipped. Files are written atomically using
+a temp file plus rename, so a failed write never leaves a half-encrypted
+secret on disk.
 
 ### Edit a file in `$EDITOR`
 
@@ -123,7 +143,7 @@ err := cipher.Edit(ctx, afero.NewOsFs(), "secrets.yaml", enc, dec,
 )
 ```
 
-Read-only `fn`? Return the same bytes — `Edit` skips the write.
+If `fn` is read-only, return the same bytes. `Edit` skips the write.
 
 ### Drive everything from `.sops.yaml`
 
@@ -135,8 +155,8 @@ enc := cipher.NewRoutedEncoder(router, cipher.EncoderOptions{})
 ciphertext, err := enc.Encode(ctx, "secrets/prod/db.yaml", plain)
 ```
 
-The Router consults the project's `.sops.yaml` on every call — same
-matching semantics as the `sops` CLI's `creation_rules`.
+The Router consults the project's `.sops.yaml` on every call. Matching
+semantics are identical to the `sops` CLI's `creation_rules`.
 
 ### Rotate the data key
 
@@ -146,7 +166,7 @@ rotated, err := cipher.Rotate(ctx, "secrets.yaml", ciphertext, enc, dec)
 
 Same recipients, new data key. Use `RotateWalk` over a directory.
 
-### Add or remove a recipient (no payload re-encryption)
+### Add or remove a recipient
 
 ```go
 withBob, err := cipher.AddRecipient(
@@ -159,8 +179,8 @@ withoutBob, err := cipher.RemoveRecipient(
 )
 ```
 
-Only the wrapped data key changes — the encrypted payload is byte-for-byte
-identical.
+Only the wrapped data key changes. The encrypted payload is
+byte-for-byte identical.
 
 ## Concepts
 
@@ -176,29 +196,56 @@ plain function satisfies it (the `http.HandlerFunc` style).
 | `Router` | `Resolve(path) (KeyProvider, EncoderOptions, error)` | Picks recipients per path. |
 | `Logger` | `Debugf / Infof / Warnf` | Optional observability hook. |
 
-Matchers: `MatchAll`, `MatchNone`, `MatchRegex`, `MatchExt`, `MatchGlob`,
-`MatchAnyOf`, `MatchAllOf`, `MatchNot`.
+Available matchers:
 
-Encoder/Decoder options expose every sops knob (`EncryptedRegex`,
-`UnencryptedSuffix`, `MACOnlyEncrypted`, `ShamirThreshold`, custom
-`KeyServiceClient`, custom `sops.Cipher`) plus a `Logger` and per-call
-`OnEncrypt` / `OnDecrypt` callbacks.
+- `MatchAll`
+- `MatchNone`
+- `MatchRegex`
+- `MatchExt`
+- `MatchGlob`
+- `MatchAnyOf`
+- `MatchAllOf`
+- `MatchNot`
+
+Encoder and Decoder options expose every sops knob:
+
+- `EncryptedRegex`
+- `UnencryptedRegex`
+- `EncryptedSuffix`
+- `UnencryptedSuffix`
+- `MACOnlyEncrypted`
+- `ShamirThreshold`
+- custom `KeyServiceClient`
+- custom `sops.Cipher`
+- `Logger` (zap, logrus, slog, or anything matching the interface)
+- `OnEncrypt` and `OnDecrypt` callbacks
 
 ## CLI
 
 ```
-cipher encrypt PATH         # encrypt a file (--age / --kms / --gcp-kms / --vault-uri / --azure-keyvault / --pgp / --config)
-cipher decrypt PATH         # decrypt a file
-cipher edit PATH            # decrypt → $EDITOR → re-encrypt
-cipher rotate PATH...       # rotate the data key
-cipher walk encrypt ROOT    # walk a tree, encrypting matches
+cipher encrypt PATH
+cipher decrypt PATH
+cipher edit PATH
+cipher rotate PATH...
+cipher walk encrypt ROOT
 cipher walk decrypt ROOT
 cipher walk rotate ROOT
 cipher add-recipient PATH --age AGE1...
 cipher remove-recipient PATH RECIPIENT_STRING
-cipher precommit            # reject staged plaintext files that .sops.yaml says should be encrypted
+cipher precommit
 cipher version
 ```
+
+Recipient flags accepted by encrypt, edit, rotate, walk, and
+add-recipient:
+
+- `--age`
+- `--kms`
+- `--gcp-kms`
+- `--vault-uri`
+- `--azure-keyvault`
+- `--pgp`
+- `--config` (load `.sops.yaml`)
 
 Every command supports `-i/--in-place`, `-o/--output`, and stdin/stdout
 via `PATH == "-"`. Walks take `--ext`, `--regex`, and `--parallel`.
@@ -210,13 +257,18 @@ via `PATH == "-"`. Walks take `--ext`, `--regex`, and `--parallel`.
 exec cipher precommit
 ```
 
-Drops into `.git/hooks/pre-commit` (or your `pre-commit` framework).
-Walks `git diff --cached`, compares each staged blob against the
-project's `.sops.yaml`, and exits non-zero with a list of paths if any
-match a creation rule but are not sops-encrypted. The first time a
-teammate forgets to encrypt before committing, this saves the day.
+Drop this into `.git/hooks/pre-commit` or your `pre-commit` framework.
+The hook does three things:
 
-## Inspect + diff
+1. Walks the files in `git diff --cached`.
+2. Compares each staged blob against the project's `.sops.yaml`.
+3. Exits non-zero with a list of paths if any match a creation rule but
+   are not sops-encrypted.
+
+The first time a teammate forgets to encrypt before committing, this
+saves the day.
+
+## Inspect and diff
 
 Read recipients out of an encrypted file without decrypting it:
 
@@ -229,7 +281,7 @@ for _, group := range info.Groups {
 }
 ```
 
-Diff two versions of the same secret (great for PR review):
+Diff two versions of the same secret. Useful for PR review:
 
 ```go
 diff, err := cipher.DiffRecipientsPath("secrets.yaml", before, after)
@@ -239,7 +291,7 @@ for _, r := range diff.Removed { fmt.Println("-", r) }
 
 ## Shamir secret sharing
 
-`NewShamirRule(match, threshold, providers...)` wires `threshold`-of-N
+`NewShamirRule(match, threshold, providers...)` wires threshold-of-N
 recovery across heterogeneous backends:
 
 ```go
@@ -252,7 +304,7 @@ rule := cipher.NewShamirRule(
 enc := cipher.NewRoutedEncoder(cipher.NewRouter(rule), cipher.EncoderOptions{})
 ```
 
-## HTTP middleware (`cipher/httpmw`)
+## HTTP middleware
 
 ```go
 http.Handle("/secrets/", httpmw.DecryptRequestBody(
@@ -264,11 +316,13 @@ http.Handle("/export/", httpmw.EncryptResponseBody(
 )(myHandler))
 ```
 
-Decryption failures return 400. Oversize bodies return 413
-(configurable via `WithMaxBodyBytes`). The wrapped handler sees
-plaintext via `r.Body`.
+Behavior:
 
-## OpenTelemetry tracing (`cipher/otelcipher`)
+- Decryption failures return HTTP 400.
+- Oversize bodies return HTTP 413 (configurable via `WithMaxBodyBytes`).
+- The wrapped handler sees plaintext via `r.Body`.
+
+## OpenTelemetry tracing
 
 ```go
 tracer := otel.Tracer("my-service")
@@ -276,11 +330,16 @@ enc := otelcipher.WrapEncoder(cipher.NewEncoder(kp), tracer)
 dec := otelcipher.WrapDecoder(cipher.NewDecoder(), tracer)
 ```
 
-Each call emits a `cipher.Encode` / `cipher.Decode` span with `path`,
-`plaintext_bytes`, and `ciphertext_bytes` attributes. Errors are
-recorded on the span.
+Each call emits a `cipher.Encode` or `cipher.Decode` span. Span
+attributes include:
 
-## Test helpers (`cipher/ciphertest`)
+- `cipher.path`
+- `cipher.plaintext_bytes`
+- `cipher.ciphertext_bytes`
+
+Errors are recorded on the span.
+
+## Test helpers
 
 ```go
 func TestMyHandler(t *testing.T) {
@@ -294,13 +353,13 @@ func TestMyHandler(t *testing.T) {
 
 `NewProvider` generates a fresh age identity, sets `SOPS_AGE_KEY` in the
 process environment, and returns a working `KeyProvider`. Tests that use
-it must not call `t.Parallel` (the env is process-global).
+it must not call `t.Parallel`, because the env is process-global.
 
 ## Streaming and large files
 
-Sops loads the entire file into memory before emitting; cipher inherits
-that constraint. Set `EncoderOptions.MaxPlaintextBytes` to fail fast on
-inputs you know would blow the process budget:
+Sops loads the entire file into memory before emitting. cipher inherits
+that constraint. To fail fast on inputs that would blow your process
+budget, set `EncoderOptions.MaxPlaintextBytes`:
 
 ```go
 enc := cipher.NewEncoderWith(kp, cipher.EncoderOptions{
@@ -308,8 +367,8 @@ enc := cipher.NewEncoderWith(kp, cipher.EncoderOptions{
 })
 ```
 
-Streaming binary encrypt is not currently supported (sops's data model
-does not split a single file across chunks).
+Streaming binary encrypt is not currently supported. Sops's data model
+does not split a single file across chunks.
 
 ## Status
 
@@ -317,15 +376,20 @@ The public API surface is stable. The `internal/sopsx` package wraps
 `github.com/getsops/sops/v3/cmd/sops/common` so a breaking change in
 sops internals stays contained to a single file.
 
-The wider package tree:
+Package tree:
 
 | Package | Purpose |
 | ------- | ------- |
-| `cipher` | Core interfaces, walker, ops (Edit/Rotate/Add/Remove/Inspect/Diff), Router, status, errors, Logger. |
-| `cipher/age`, `cipher/kms`, `cipher/gcpkms`, `cipher/vault`, `cipher/azkv`, `cipher/pgp` | `KeyProvider` per backend. |
-| `cipher/sopsconfig` | Parses `.sops.yaml`, returns a `Router`. |
+| `cipher` | Core interfaces, walker, ops, router, status, errors, logger. |
+| `cipher/age` | KeyProvider for age recipients. |
+| `cipher/kms` | KeyProvider for AWS KMS. |
+| `cipher/gcpkms` | KeyProvider for GCP KMS. |
+| `cipher/vault` | KeyProvider for HashiCorp Vault Transit. |
+| `cipher/azkv` | KeyProvider for Azure Key Vault. |
+| `cipher/pgp` | KeyProvider for GPG fingerprints. |
+| `cipher/sopsconfig` | Parses `.sops.yaml` and returns a Router. |
 | `cipher/precommit` | Git pre-commit safety check. |
-| `cipher/httpmw` | HTTP middleware (decrypt body / encrypt response). |
+| `cipher/httpmw` | HTTP middleware. |
 | `cipher/otelcipher` | OpenTelemetry span wrappers. |
 | `cipher/ciphertest` | Test helpers for code that uses cipher. |
 | `cmd/cipher` | End-to-end CLI. |
@@ -336,16 +400,18 @@ The wider package tree:
 
 Sentinel errors for `errors.Is`:
 
-- `ErrEncode`, `ErrDecode` — wrap any encode/decode failure
-- `ErrAlreadyEncrypted` — input already carries sops metadata
-- `ErrNotEncrypted` — input is plain
-- `ErrEmpty` — input has no encryptable branches
-- `ErrNoKeyGroups` — encoder has no key groups
-- `ErrUnsupportedFormat` — format is not supported
-- `ErrNoMatchingRule` — Router could not match the path
+- `ErrEncode` and `ErrDecode` wrap any encode or decode failure.
+- `ErrAlreadyEncrypted` is returned when input already carries sops
+  metadata.
+- `ErrNotEncrypted` is returned when input is plain.
+- `ErrEmpty` is returned when input has no encryptable branches.
+- `ErrNoKeyGroups` is returned when the encoder has no key groups.
+- `ErrUnsupportedFormat` is returned for formats this library does not
+  handle.
+- `ErrNoMatchingRule` is returned when a Router cannot match the path.
 
-Walkers treat `ErrAlreadyEncrypted` (encode) and `ErrNotEncrypted`
-(decode) as skip signals, not failures.
+Walkers treat `ErrAlreadyEncrypted` on encode and `ErrNotEncrypted` on
+decode as skip signals, not failures.
 
 ## License
 
