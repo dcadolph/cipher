@@ -1,2 +1,26 @@
-.idea
-cipher
+# IDEs and editors
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Coverage output
+coverage.txt
+coverage.out
+cover.out
+profile.cov
+
+# Project binaries (root-anchored so it does not match cmd/cipher/)
+/cipher

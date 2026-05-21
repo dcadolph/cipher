@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="internal/logo/cipher.png" alt="cipher" width="200" height="200">
+</p>
+
 # cipher
 
 A Go library and CLI for [sops](https://github.com/getsops/sops) that fills
