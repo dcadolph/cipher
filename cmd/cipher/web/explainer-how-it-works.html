@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>cipher . how it works</title>
+  <style>
+    .cipher-explainer-frame {
+      position: relative;
+      width: min(1100px, 96vw);
+      aspect-ratio: 1100 / 619;
+      background: linear-gradient(180deg, #06090f 0%, #0d1320 100%);
+      border: 1px solid rgba(249, 99, 2, 0.35);
+      border-radius: 14px;
+      box-shadow:
+        0 0 60px rgba(249, 99, 2, 0.18),
+        0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+      overflow: hidden;
+    }
+    #cipher-explainer-stage { width: 100%; height: 100%; display: block; }
+    #cipher-explainer-scene-label {
+      position: absolute; top: 14px; left: 18px;
+      padding: 6px 12px;
+      background: rgba(13, 19, 32, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      color: #f0f6fc;
+      font-size: 12px; letter-spacing: 0.06em;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      user-select: none;
+    }
+    #cipher-explainer-caption {
+      position: absolute; left: 50%; bottom: 92px; transform: translateX(-50%);
+      max-width: 80%; padding: 12px 22px;
+      background: rgba(13, 19, 32, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      color: #f0f6fc;
+      font-size: 22px; font-weight: 700; line-height: 1.35; text-align: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+    #cipher-explainer-caption .accent { color: #f96302; }
+    #cipher-explainer-caption .sub {
+      display: block; font-size: 14px; font-weight: 400; color: #8b949e; margin-top: 6px;
+    }
+    .cipher-explainer-controls {
+      position: absolute; top: 14px; right: 18px;
+      display: flex; gap: 6px;
+      opacity: 0.4; transition: opacity 0.15s ease;
+    }
+    .cipher-explainer-frame:hover .cipher-explainer-controls { opacity: 1; }
+    .cipher-explainer-controls button {
+      background: rgba(13, 19, 32, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #f0f6fc;
+      font-size: 11px; letter-spacing: 0.06em;
+      padding: 6px 10px; border-radius: 6px; cursor: pointer; font-family: inherit;
+    }
+    .cipher-explainer-controls button:hover { border-color: rgba(249, 99, 2, 0.6); }
+    #cipher-explainer-progress {
+      position: absolute; left: 14px; right: 14px; bottom: 16px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: height 0.15s ease;
+    }
+    .cipher-explainer-frame:hover #cipher-explainer-progress { height: 10px; }
+    #cipher-explainer-progress-fill {
+      position: absolute; left: 0; top: 0;
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, #f96302 0%, #ff8a42 100%);
+      box-shadow: 0 0 10px rgba(249, 99, 2, 0.55);
+      border-radius: 4px;
+      transition: width 80ms linear;
+    }
+    #cipher-explainer-progress-head {
+      position: absolute; top: 50%; left: 0;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #f96302;
+      transform: translate(-50%, -50%);
+      opacity: 0; transition: opacity 0.15s ease;
+      pointer-events: none;
+    }
+    .cipher-explainer-frame:hover #cipher-explainer-progress-head { opacity: 1; }
+    #cipher-explainer-progress-tooltip {
+      position: absolute; bottom: 18px; transform: translateX(-50%);
+      padding: 4px 10px;
+      background: rgba(13, 19, 32, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      color: #c9d1d9;
+      font-size: 11px; letter-spacing: 0.04em;
+      opacity: 0; transition: opacity 0.15s ease;
+      pointer-events: none; font-family: inherit;
+      white-space: nowrap;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #cipher-explainer-progress-fill { transition: none; }
+    }
+  </style>
+  <link rel="stylesheet" href="/cinematic-chrome.css">
+</head>
+<body class="cipher-cine-body">
+
+  <header class="cipher-cine-header">
+    <span class="dot"></span>
+    <span class="wordmark">cipher</span>
+    <span class="divider">.</span>
+    <span class="scene-title">how it works: envelope encryption end to end</span>
+  </header>
+
+  <div class="cipher-explainer-frame-wrap">
+    <div class="cipher-explainer-frame">
+      <div id="cipher-explainer-scene-label">1 / 6</div>
+      <svg id="cipher-explainer-stage" viewBox="0 0 1100 619" preserveAspectRatio="xMidYMid meet"></svg>
+      <div id="cipher-explainer-caption">loading.</div>
+      <div class="cipher-explainer-controls">
+        <button id="cipher-explainer-pause" type="button">pause</button>
+        <button id="cipher-explainer-replay" type="button">restart</button>
+        <button id="cipher-explainer-skip" type="button">skip</button>
+      </div>
+      <div id="cipher-explainer-progress">
+        <div id="cipher-explainer-progress-fill"></div>
+        <div id="cipher-explainer-progress-head"></div>
+        <div id="cipher-explainer-progress-tooltip"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cipher-explainer-cta">
+    <a href="/">all explainers</a>
+    <a href="/explainer/walk">next: walks</a>
+    <a href="https://github.com/dcadolph/cipher">GitHub</a>
+  </div>
+
+  <footer class="cipher-explainer-docs">
+    <a href="/">library home</a>
+    <a href="/explainer/intro">intro</a>
+    <a href="/explainer/tour">tour</a>
+    <a href="/explainer/walk">walks</a>
+  </footer>
+
+  <script src="/cinematic-endcard.js"></script>
+  <script src="/cinematic-engine.js"></script>
+  <script src="/explainer-how-it-works.js"></script>
+</body>
+</html>

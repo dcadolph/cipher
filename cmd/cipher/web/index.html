@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>cipher . tour library</title>
+  <link rel="stylesheet" href="/cinematic-chrome.css">
+</head>
+<body>
+  <header class="cipher-cine-header" style="padding-bottom: 12px;">
+    <span class="dot"></span>
+    <span class="wordmark">cipher</span>
+    <span class="divider">.</span>
+    <span class="scene-title">tour library</span>
+  </header>
+
+  <main class="cipher-library">
+    <h1>cipher tour library</h1>
+    <p class="lede">
+      Six short cinematics that explain what cipher does and how. Each
+      tile links to a self-running visual narrative. Press space to
+      pause, drag the progress bar to scrub, R to restart. New here?
+      Start with <a href="/explainer/intro" class="lede-link">intro</a>.
+      Want the mechanism? Try <a href="/explainer/how-it-works" class="lede-link">how it works</a>.
+    </p>
+
+    <div class="cipher-cinematics-cta">
+      <a class="cipher-pill" href="/explainer/intro">Cinematics &rarr;</a>
+    </div>
+
+    <div class="tile-grid">
+      <a class="tile" href="/explainer/intro">
+        <div class="eyebrow">New here</div>
+        <h2>What is cipher</h2>
+        <p>
+          High-level pitch for someone who has not heard of sops.
+          The problem, the sops idea, where cipher fits, and a
+          five-minute start.
+        </p>
+        <div class="runtime">~60 seconds</div>
+      </a>
+
+      <a class="tile" href="/explainer/how-it-works">
+        <div class="eyebrow">Mechanism</div>
+        <h2>How it works end to end</h2>
+        <p>
+          Envelope encryption walked step by step: fresh data key,
+          per-leaf AES-GCM, wrapped key per recipient, single
+          self-contained file, decrypt in reverse.
+        </p>
+        <div class="runtime">~80 seconds</div>
+      </a>
+
+      <a class="tile" href="/explainer/tour">
+        <div class="eyebrow">Hero</div>
+        <h2>Cipher in 90 seconds</h2>
+        <p>
+          What cipher is, the four interfaces it ships, and the
+          operations that come after encryption: rotate, recipients,
+          walks, pre-commit.
+        </p>
+        <div class="runtime">~90 seconds</div>
+      </a>
+
+      <a class="tile" href="/explainer/walk">
+        <div class="eyebrow">Walks</div>
+        <h2>Encrypt a tree in parallel</h2>
+        <p>
+          Bounded parallelism, atomic temp-file writes, and
+          first-class skip signals. Watch a directory roll through
+          encryption file by file.
+        </p>
+        <div class="runtime">~60 seconds</div>
+      </a>
+
+      <a class="tile" href="/explainer/recipients">
+        <div class="eyebrow">Recipients</div>
+        <h2>Add and remove without re-encrypting</h2>
+        <p>
+          The wrapped data key changes. The ciphertext does not. See
+          how AddRecipient and RemoveRecipient touch only metadata.
+        </p>
+        <div class="runtime">~60 seconds</div>
+      </a>
+
+      <a class="tile" href="/explainer/precommit">
+        <div class="eyebrow">Pre-commit</div>
+        <h2>Block plaintext at the door</h2>
+        <p>
+          The git pre-commit hook walks staged blobs, checks each
+          against .sops.yaml, and fails the commit if a file should
+          have been encrypted.
+        </p>
+        <div class="runtime">~60 seconds</div>
+      </a>
+    </div>
+  </main>
+
+  <footer class="cipher-explainer-docs">
+    <a href="https://github.com/dcadolph/cipher">GitHub</a>
+    <a href="https://github.com/getsops/sops">sops upstream</a>
+    <a href="/trailer">Direct link to the hero tour</a>
+  </footer>
+</body>
+</html>

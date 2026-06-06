@@ -1,0 +1,230 @@
+/*
+ * Shared chrome for the cipher cinematic library.
+ * Defines the grid layout (brand header, frame, CTA, docs links),
+ * the page-level background, the body opt-in class, and a few rules
+ * the per-cinematic HTML shells rely on.
+ *
+ * Per-cinematic stylesheets live inside each explainer-<slug>.html.
+ * This stylesheet is loaded after them so its rules win the cascade
+ * on shared selectors. Bodies opt in via class="cipher-cine-body".
+ */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(180deg, #06090f 0%, #0d1320 100%);
+  color: #c9d1d9;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+  min-height: 100vh;
+}
+
+body.cipher-cine-body {
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  align-items: center;
+  min-height: 100vh;
+  padding: 0;
+}
+
+.cipher-cine-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 18px 24px 0 24px;
+  color: #f0f6fc;
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  user-select: none;
+}
+
+.cipher-cine-header .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #f96302;
+  box-shadow: 0 0 14px rgba(249, 99, 2, 0.55);
+}
+
+.cipher-cine-header .wordmark {
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+}
+
+.cipher-cine-header .divider {
+  color: #4b5563;
+  font-size: 18px;
+}
+
+.cipher-cine-header .scene-title {
+  color: #8b949e;
+}
+
+.cipher-explainer-frame-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 12px 16px;
+}
+
+.cipher-explainer-cta {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  padding: 6px 16px 0 16px;
+  flex-wrap: wrap;
+}
+
+.cipher-explainer-cta a {
+  color: #f0f6fc;
+  text-decoration: none;
+  font-size: 14px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid rgba(249, 99, 2, 0.45);
+  background: rgba(249, 99, 2, 0.08);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.cipher-explainer-cta a:hover {
+  background: rgba(249, 99, 2, 0.18);
+  border-color: rgba(249, 99, 2, 0.85);
+}
+
+.cipher-explainer-docs {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  padding: 12px 16px 24px 16px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: #8b949e;
+}
+
+.cipher-explainer-docs a {
+  color: #8b949e;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.cipher-explainer-docs a:hover {
+  color: #f0f6fc;
+}
+
+/* Library landing page tiles. */
+.cipher-library {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 24px 64px 24px;
+}
+
+.cipher-library h1 {
+  font-size: 36px;
+  font-weight: 700;
+  color: #f0f6fc;
+  margin: 0 0 8px 0;
+}
+
+.cipher-library .lede {
+  font-size: 16px;
+  color: #8b949e;
+  margin: 0 0 18px 0;
+  max-width: 720px;
+}
+
+.cipher-library .lede-link {
+  color: #f96302;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(249, 99, 2, 0.5);
+}
+
+.cipher-library .lede-link:hover {
+  color: #ff8a42;
+  border-bottom-color: rgba(249, 99, 2, 0.9);
+}
+
+.cipher-cinematics-cta {
+  display: flex;
+  gap: 12px;
+  margin: 0 0 28px 0;
+}
+
+.cipher-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  background: rgba(249, 99, 2, 0.14);
+  border: 1px solid rgba(249, 99, 2, 0.55);
+  border-radius: 999px;
+  color: #f0f6fc;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.cipher-pill:hover {
+  background: rgba(249, 99, 2, 0.28);
+  border-color: rgba(249, 99, 2, 0.9);
+  transform: translateY(-1px);
+}
+
+.cipher-library .tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.cipher-library .tile {
+  display: flex;
+  flex-direction: column;
+  padding: 22px;
+  background: rgba(13, 19, 32, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.cipher-library .tile:hover {
+  border-color: rgba(249, 99, 2, 0.6);
+  transform: translateY(-2px);
+}
+
+.cipher-library .tile .eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #f96302;
+  margin-bottom: 8px;
+}
+
+.cipher-library .tile h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #f0f6fc;
+  margin: 0 0 8px 0;
+}
+
+.cipher-library .tile p {
+  font-size: 14px;
+  color: #8b949e;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.cipher-library .tile .runtime {
+  margin-top: 14px;
+  font-size: 12px;
+  color: #c9d1d9;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cipher-library .tile {
+    transition: none;
+  }
+}
