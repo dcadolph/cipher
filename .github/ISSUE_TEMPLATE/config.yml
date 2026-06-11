@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a vulnerability
+    url: https://github.com/dcadolph/cipher/security/advisories/new
+    about: Use GitHub Security Advisories for vulnerabilities, not the public issue tracker. See SECURITY.md.

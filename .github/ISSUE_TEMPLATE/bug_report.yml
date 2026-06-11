@@ -1,0 +1,68 @@
+name: Bug report
+description: Something is broken or misbehaving.
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug. Security-sensitive reports should go through [GitHub Security Advisories](https://github.com/dcadolph/cipher/security/advisories/new) instead of a public issue. See [SECURITY.md](https://github.com/dcadolph/cipher/blob/main/SECURITY.md).
+
+  - type: input
+    id: version
+    attributes:
+      label: cipher version
+      description: Output of `cipher version` or the commit hash you built from.
+      placeholder: v0.1.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: backend
+    attributes:
+      label: Backend in use
+      multiple: true
+      options:
+        - age
+        - AWS KMS
+        - GCP KMS
+        - Vault Transit
+        - Azure Key Vault
+        - PGP
+        - Not backend specific
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: Smallest set of steps that reproduces the bug. Code or a small repo if possible.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include the full error output.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: OS, Go version, cloud provider, anything relevant.
+      placeholder: macOS 14.5, go1.25.1, AWS KMS in us-east-1
+    validations:
+      required: false

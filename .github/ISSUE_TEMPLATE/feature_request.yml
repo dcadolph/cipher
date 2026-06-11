@@ -1,0 +1,40 @@
+name: Feature request
+description: Propose a new capability or extension.
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user-facing problem are you trying to solve? Avoid jumping to the solution here.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What would the API or CLI look like? Sketches, code samples, and CLI invocations welcome.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds, related libraries, prior art.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: affects
+    attributes:
+      label: Surface area
+      description: Which surfaces does this change touch?
+      options:
+        - label: Library API
+        - label: CLI
+        - label: One or more backends
+        - label: Docs only
