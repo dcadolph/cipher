@@ -1,0 +1,123 @@
+version: "2"
+
+run:
+  timeout: 5m
+  build-tags:
+    - integration
+  tests: true
+
+linters:
+  default: none
+  enable:
+    - bodyclose
+    - contextcheck
+    - dupword
+    - durationcheck
+    - errcheck
+    - errname
+    - errorlint
+    - gocritic
+    - gosec
+    - govet
+    - ineffassign
+    - misspell
+    - nakedret
+    - nilerr
+    - noctx
+    - prealloc
+    - predeclared
+    - revive
+    - staticcheck
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - unused
+    - wastedassign
+    - whitespace
+  settings:
+    misspell:
+      locale: US
+    gosec:
+      excludes:
+        - G304
+        - G306
+        - G404
+    revive:
+      rules:
+        - name: var-naming
+          disabled: false
+        - name: exported
+          disabled: false
+          arguments:
+            - disableStutteringCheck
+        - name: package-comments
+          disabled: false
+        - name: indent-error-flow
+          disabled: false
+        - name: error-return
+          disabled: false
+        - name: error-naming
+          disabled: false
+        - name: receiver-naming
+          disabled: false
+        - name: unused-parameter
+          disabled: true
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+        - style
+      disabled-checks:
+        - ifElseChain
+        - singleCaseSwitch
+        - hugeParam
+        - rangeValCopy
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - gosec
+          - errcheck
+          - dupl
+          - gocritic
+          - noctx
+          - prealloc
+          - tparallel
+          - nilerr
+      - path: ciphertest/
+        linters:
+          - errcheck
+          - gosec
+          - thelper
+      - path: internal/sopsx/
+        text: fieldalignment
+      - path: cmd/cipher/
+        linters:
+          - errcheck
+          - gosec
+          - noctx
+          - gocritic
+      - path: precommit/precommit\.go
+        linters:
+          - gosec
+          - noctx
+      - path: precommit/precommit\.go
+        text: Violation
+        linters:
+          - errname
+    paths:
+      - cmd/cipher/web
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/dcadolph/cipher
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
