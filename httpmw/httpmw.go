@@ -16,6 +16,20 @@
 //     encrypts via the supplied [cipher.Encoder], and writes the
 //     ciphertext to the client.
 //
+// # Streaming and hijacking constraint
+//
+// [EncryptResponseBody] must see the entire plaintext before it can
+// emit ciphertext, so it fully buffers the wrapped handler's response.
+// The buffered http.ResponseWriter intentionally does not implement
+// [http.Flusher], [http.Hijacker], or [io.ReaderFrom]. Wrapped
+// handlers that rely on those interfaces (Server-Sent Events,
+// websocket upgrades, sendfile fast paths, or incremental flush)
+// silently degrade: the type assertion fails and the feature becomes
+// a no-op. Do not wrap such handlers with [EncryptResponseBody].
+// [DecryptRequestBody] only rewrites the request body and leaves the
+// response writer untouched, so it imposes no streaming constraint on
+// the wrapped handler.
+//
 // # Path
 //
 // Both middlewares take a [PathFunc] that maps an HTTP request to the
@@ -150,6 +164,11 @@ func DecryptRequestBody(
 // passed through unchanged so error messages remain readable to
 // clients and proxies.
 //
+// The buffered writer does not implement [http.Flusher],
+// [http.Hijacker], or [io.ReaderFrom]. Handlers that rely on those
+// interfaces will lose them when wrapped. See the package comment
+// for the full streaming constraint.
+//
 // Encryption failures respond with 500 (after the inner handler has
 // already produced a body that the client never sees).
 func EncryptResponseBody(
@@ -229,7 +248,13 @@ func errStatus(err error) int {
 }
 
 // bufferedWriter is a http.ResponseWriter that buffers writes so the
-// middleware can mutate the body before flushing to the client.
+// middleware can mutate the body before flushing to the client. It
+// intentionally implements only the three http.ResponseWriter methods,
+// dropping any http.Flusher, http.Hijacker, or io.ReaderFrom support
+// the underlying writer might have provided. Buffering the whole body
+// is required by encryption, and exposing those interfaces would
+// invite handlers to assume streaming semantics this middleware cannot
+// honor.
 type bufferedWriter struct {
 	header http.Header
 	body   bytes.Buffer
