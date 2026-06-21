@@ -33,12 +33,39 @@ type WalkOptions struct {
 	BackupSuffix string
 	// OnFile is called for every visited file after a successful encode,
 	// decode, or rotate. It receives the path and the resulting byte count.
-	// Nil is treated as a no-op.
+	// Nil is treated as a no-op. When Parallelism > 1 the walker
+	// serializes invocations so the callback never sees a concurrent
+	// call. User code does not need its own mutex.
 	OnFile func(path string, bytes int)
 	// OnSkip is called when a file is skipped (ErrAlreadyEncrypted,
 	// ErrNotEncrypted, ErrEmpty, or matcher rejection). Nil is treated
-	// as a no-op.
+	// as a no-op. Serialized under Parallelism > 1, same as OnFile.
 	OnSkip func(path string, reason error)
+}
+
+// serializeCallbacks wraps opts.OnFile and opts.OnSkip in mutex-locked
+// versions when the walk runs more than one worker. Sequential walks
+// pay no cost. Wrapping happens once at entry so all subsequent calls
+// from worker goroutines pass through the same mutex.
+func serializeCallbacks(opts *WalkOptions) {
+	if opts.Parallelism <= 1 {
+		return
+	}
+	var mu sync.Mutex
+	if onFile := opts.OnFile; onFile != nil {
+		opts.OnFile = func(path string, n int) {
+			mu.Lock()
+			defer mu.Unlock()
+			onFile(path, n)
+		}
+	}
+	if onSkip := opts.OnSkip; onSkip != nil {
+		opts.OnSkip = func(path string, reason error) {
+			mu.Lock()
+			defer mu.Unlock()
+			onSkip(path, reason)
+		}
+	}
 }
 
 // EncodeWalk walks root on files and encrypts every file matched by any
@@ -62,6 +89,7 @@ func EncodeWalkWith(
 	if enc == nil {
 		panic("cipher: EncodeWalkWith: encoder required")
 	}
+	serializeCallbacks(&opts)
 	return runWalk(ctx, files, root, matchers, opts,
 		func(ctx context.Context, fs afero.Fs, path string, info fs.FileInfo) error {
 			data, err := afero.ReadFile(fs, path)
@@ -108,6 +136,7 @@ func DecodeWalkWith(
 	if dec == nil {
 		panic("cipher: DecodeWalkWith: decoder required")
 	}
+	serializeCallbacks(&opts)
 	return runWalk(ctx, files, root, matchers, opts,
 		func(ctx context.Context, fs afero.Fs, path string, info fs.FileInfo) error {
 			data, err := afero.ReadFile(fs, path)

@@ -170,6 +170,7 @@ func RotateWalkWith(
 	if dec == nil {
 		panic("cipher: RotateWalkWith: decoder required")
 	}
+	serializeCallbacks(&opts)
 	return runWalk(ctx, files, root, matchers, opts,
 		func(ctx context.Context, fs afero.Fs, path string, info fs.FileInfo) error {
 			data, err := afero.ReadFile(fs, path)
