@@ -190,7 +190,7 @@ go install github.com/dcadolph/cipher/cmd/cipher@latest
 git clone https://github.com/dcadolph/cipher && cd cipher && make install
 ```
 
-Prebuilt binaries and checksums for Linux, macOS, and Windows live on every [release](https://github.com/dcadolph/cipher/releases).
+Prebuilt binaries and checksums for Linux, macOS, and Windows ship with every [release](https://github.com/dcadolph/cipher/releases).
 
 ### Library
 

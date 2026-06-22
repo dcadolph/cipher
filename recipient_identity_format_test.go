@@ -129,3 +129,118 @@ func (*emptyKeyGroupsError) Error() string { return "provider returned no master
 // ToString. Keeps a future sops refactor from silently breaking the
 // assumption RemoveRecipient depends on.
 var _ = func(k keys.MasterKey) string { return k.ToString() }
+
+// TestBackendParityRejectsEmpty asserts every backend's NewProvider
+// rejects an empty or whitespace-only recipient list. Catches drift
+// if one backend silently allows zero usable recipients while another
+// errors.
+func TestBackendParityRejectsEmpty(t *testing.T) {
+	t.Parallel()
+	type ctor func(...string) (cipher.KeyProvider, error)
+	backends := []struct {
+		Name string
+		New  ctor
+	}{
+		// Test 0: age.
+		{"age", age.NewProvider},
+		// Test 1: aws kms.
+		{"aws-kms", kms.NewProvider},
+		// Test 2: gcp kms.
+		{"gcp-kms", gcpkms.NewProvider},
+		// Test 3: vault.
+		{"vault", vault.NewProvider},
+		// Test 4: azure key vault.
+		{"azure-keyvault", azkv.NewProvider},
+		// Test 5: pgp.
+		{"pgp", pgp.NewProvider},
+	}
+	for i, b := range backends {
+		t.Run(b.Name+"/no-args", func(t *testing.T) {
+			t.Parallel()
+			if _, err := b.New(); err == nil {
+				t.Errorf("Test %d (%s): expected error for empty input", i, b.Name)
+			}
+		})
+		t.Run(b.Name+"/whitespace", func(t *testing.T) {
+			t.Parallel()
+			if _, err := b.New("  ", "\t", ""); err == nil {
+				t.Errorf("Test %d (%s): expected error for whitespace-only input",
+					i, b.Name)
+			}
+		})
+	}
+}
+
+// TestBackendParityShape asserts every backend's KeyGroups returns
+// exactly one key group with len(recipients) master keys. Sops itself
+// supports multi-group, but cipher's per-backend providers all
+// flatten into a single group.
+func TestBackendParityShape(t *testing.T) {
+	t.Parallel()
+	type ctor func(...string) (cipher.KeyProvider, error)
+	type sample struct {
+		Name string
+		New  ctor
+		A, B string
+	}
+	idA := age.MustGenerateIdentity()
+	idB := age.MustGenerateIdentity()
+	samples := []sample{
+		{ // Test 0: age.
+			Name: "age",
+			New:  age.NewProvider,
+			A:    idA.Recipient,
+			B:    idB.Recipient,
+		},
+		{ // Test 1: aws kms.
+			Name: "aws-kms",
+			New:  kms.NewProvider,
+			A:    "arn:aws:kms:us-east-1:111122223333:key/aaaa1234-ef56-7890-abcd-ef1234567890",
+			B:    "arn:aws:kms:us-east-1:111122223333:key/bbbb1234-ef56-7890-abcd-ef1234567890",
+		},
+		{ // Test 2: gcp kms.
+			Name: "gcp-kms",
+			New:  gcpkms.NewProvider,
+			A:    "projects/p/locations/us/keyRings/r/cryptoKeys/a",
+			B:    "projects/p/locations/us/keyRings/r/cryptoKeys/b",
+		},
+		{ // Test 3: vault.
+			Name: "vault",
+			New:  vault.NewProvider,
+			A:    "https://vault.example.com/v1/transit/keys/a",
+			B:    "https://vault.example.com/v1/transit/keys/b",
+		},
+		{ // Test 4: azure key vault.
+			Name: "azure-keyvault",
+			New:  azkv.NewProvider,
+			A:    "https://kv.vault.azure.net/keys/a/abc",
+			B:    "https://kv.vault.azure.net/keys/b/def",
+		},
+		{ // Test 5: pgp.
+			Name: "pgp",
+			New:  pgp.NewProvider,
+			A:    "AAAA1111BBBB2222CCCC3333DDDD4444EEEE5555",
+			B:    "BBBB1111CCCC2222DDDD3333EEEE4444FFFF5555",
+		},
+	}
+	for i, s := range samples {
+		t.Run(s.Name, func(t *testing.T) {
+			t.Parallel()
+			kp, err := s.New(s.A, s.B)
+			if err != nil {
+				t.Fatalf("Test %d (%s): build: %v", i, s.Name, err)
+			}
+			groups, err := kp.KeyGroups(context.Background())
+			if err != nil {
+				t.Fatalf("Test %d (%s): KeyGroups: %v", i, s.Name, err)
+			}
+			if len(groups) != 1 {
+				t.Errorf("Test %d (%s): groups = %d, want 1", i, s.Name, len(groups))
+			}
+			if len(groups) > 0 && len(groups[0]) != 2 {
+				t.Errorf("Test %d (%s): keys in group = %d, want 2",
+					i, s.Name, len(groups[0]))
+			}
+		})
+	}
+}

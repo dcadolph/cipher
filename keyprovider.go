@@ -16,6 +16,13 @@ import (
 type KeyProvider interface {
 	// KeyGroups returns the key groups to use, in priority order.
 	// Implementations should return a non-empty slice or a non-nil error.
+	//
+	// The ctx parameter is part of the contract but the built-in
+	// backend providers currently ignore it. The sops master-key
+	// constructors they wrap do their network work later, inside
+	// Encode/Decode, and accept no context. Callers should still pass
+	// a real context: custom providers may honor it, and a future
+	// version will use it once sops master keys plumb context through.
 	KeyGroups(ctx context.Context) ([]sops.KeyGroup, error)
 }
 
