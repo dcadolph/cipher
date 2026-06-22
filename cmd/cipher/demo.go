@@ -60,7 +60,8 @@ func newDemoCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&noBrowser, "no-browser", false,
 		"print the URL instead of opening the browser")
 	cmd.Flags().StringVar(&explainer, "explainer", "",
-		"jump to a specific explainer slug (intro, how-it-works, tour, walk, recipients, precommit)")
+		"jump to a specific explainer slug"+
+			" (intro, how-it-works, tour, walk, recipients, precommit)")
 	return cmd
 }
 

@@ -45,14 +45,16 @@ func main() {
 	if err != nil {
 		log.Fatalf("merged encode: %v", err)
 	}
-	fmt.Printf("merged ciphertext: %d bytes (single key group, any identity decrypts)\n", len(mergedCT))
+	fmt.Printf("merged ciphertext: %d bytes (single key group, any identity decrypts)\n",
+		len(mergedCT))
 
 	chained := cipher.NewEncoder(cipher.ChainKeyProviders(providers...))
 	chainedCT, err := chained.Encode(ctx, "secrets.yaml", plain)
 	if err != nil {
 		log.Fatalf("chained encode: %v", err)
 	}
-	fmt.Printf("chained ciphertext: %d bytes (three key groups, any group decrypts)\n", len(chainedCT))
+	fmt.Printf("chained ciphertext: %d bytes (three key groups, any group decrypts)\n",
+		len(chainedCT))
 
 	shamirRule := cipher.NewShamirRule(cipher.MatchAll(), 2, providers...)
 	shamir := cipher.NewEncoderWith(shamirRule.Provider, shamirRule.Options)

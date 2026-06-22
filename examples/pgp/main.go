@@ -34,7 +34,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("encode: %v", err)
 	}
-	fmt.Printf("encrypted to %d PGP fingerprint(s), %d ciphertext bytes\n", len(fingerprints), len(ciphertext))
+	fmt.Printf("encrypted to %d PGP fingerprint(s), %d ciphertext bytes\n",
+		len(fingerprints), len(ciphertext))
 
 	roundTrip, err := dec.Decode(ctx, "secrets.yaml", ciphertext)
 	if err != nil {

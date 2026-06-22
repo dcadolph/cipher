@@ -166,7 +166,8 @@ func newWalkRotateCmd() *cobra.Command {
 	wf.bind(cmd)
 	pf.bind(cmd.Flags())
 	cmd.Flags().StringVar(&olderThan, "older-than", "",
-		"only rotate files whose sops metadata.LastModified is older than this duration (e.g. 90d, 720h)")
+		"only rotate files whose sops metadata.LastModified is older than this"+
+			" duration (e.g. 90d, 720h)")
 	return cmd
 }
 

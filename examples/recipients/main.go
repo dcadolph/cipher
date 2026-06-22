@@ -46,7 +46,9 @@ func main() {
 	if err := os.Setenv("SOPS_AGE_KEY", alice.Secret); err != nil {
 		log.Fatalf("set SOPS_AGE_KEY: %v", err)
 	}
-	withBob, err := cipher.AddRecipient(ctx, "secrets.yaml", ciphertext, bobProvider, cipher.DecoderOptions{})
+	withBob, err := cipher.AddRecipient(
+		ctx, "secrets.yaml", ciphertext, bobProvider, cipher.DecoderOptions{},
+	)
 	if err != nil {
 		log.Fatalf("add bob: %v", err)
 	}

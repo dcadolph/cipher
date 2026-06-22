@@ -36,7 +36,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("encode: %v", err)
 	}
-	fmt.Printf("encrypted via %d Vault Transit key(s), %d ciphertext bytes\n", len(uris), len(ciphertext))
+	fmt.Printf("encrypted via %d Vault Transit key(s), %d ciphertext bytes\n",
+		len(uris), len(ciphertext))
 
 	roundTrip, err := dec.Decode(ctx, "secrets.yaml", ciphertext)
 	if err != nil {
