@@ -39,7 +39,7 @@ import (
 	"github.com/getsops/sops/v3/hcvault"
 
 	"github.com/dcadolph/cipher"
-	"github.com/dcadolph/cipher/internal/util"
+	"github.com/dcadolph/cipher/internal/strutil"
 )
 
 // Provider is a cipher.KeyProvider that wraps each Vault Transit URI
@@ -54,7 +54,7 @@ type Provider struct {
 // URIs. Empty/whitespace-only entries are dropped. Returns an error if
 // no usable URIs remain or any URI is malformed.
 func NewProvider(uris ...string) (cipher.KeyProvider, error) {
-	cleaned := util.TrimEmpty(uris)
+	cleaned := strutil.TrimEmpty(uris)
 	if len(cleaned) == 0 {
 		return nil, fmt.Errorf("cipher/vault: at least one URI required")
 	}

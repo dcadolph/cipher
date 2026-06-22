@@ -88,11 +88,15 @@ func EditWith(
 	if err != nil {
 		return fmt.Errorf("decode %q: %w", path, err)
 	}
-	// Zero the decrypted plaintext on every return path. Defense in
-	// depth: once the caller's mutator has run and we have ciphertext
-	// to write, the plaintext is no longer needed and lingering
-	// references in memory increase the window for accidental
-	// disclosure through core dumps, swap, or process-memory reads.
+	// Best-effort zero of the plaintext slice cipher owns. This wipes
+	// only the final decoded buffer, not the upstream copies sops built
+	// inside EmitPlainFile, store buffers, and
+	// GenerateDataKeyWithKeyServices. Those live in freed-but-not-zeroed
+	// heap memory until the next allocator reuse and cipher cannot
+	// reach them. The wipe still narrows the window of accidental
+	// disclosure for the slice we hand back to the mutator, but it is
+	// not a guarantee that plaintext is unrecoverable from process
+	// memory after Edit returns.
 	defer clear(plaintext)
 
 	modified, err := fn(plaintext)
@@ -100,8 +104,10 @@ func EditWith(
 		return fmt.Errorf("edit %q: %w", path, err)
 	}
 	// Modified may share storage with plaintext (in-place edit) or be
-	// a fresh slice. Either way it now holds the post-edit plaintext
-	// which we no longer need once encrypted is computed.
+	// a fresh slice from the mutator. Best-effort zero of the slice
+	// cipher sees, with the same caveat as the plaintext wipe above:
+	// if the mutator returned a fresh slice, the original backing
+	// array is already unreferenced and clear does nothing for it.
 	defer clear(modified)
 
 	if bytes.Equal(plaintext, modified) {
@@ -170,6 +176,7 @@ func RotateWalkWith(
 	if dec == nil {
 		panic("cipher: RotateWalkWith: decoder required")
 	}
+	serializeCallbacks(&opts)
 	return runWalk(ctx, files, root, matchers, opts,
 		func(ctx context.Context, fs afero.Fs, path string, info fs.FileInfo) error {
 			data, err := afero.ReadFile(fs, path)

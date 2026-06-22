@@ -37,7 +37,7 @@ import (
 	sopsazkv "github.com/getsops/sops/v3/azkv"
 
 	"github.com/dcadolph/cipher"
-	"github.com/dcadolph/cipher/internal/util"
+	"github.com/dcadolph/cipher/internal/strutil"
 )
 
 // Provider is a cipher.KeyProvider that wraps each Azure Key Vault key
@@ -52,7 +52,7 @@ type Provider struct {
 // Vault URLs. Empty/whitespace-only entries are dropped. Returns an
 // error if no usable URLs remain or any URL is malformed.
 func NewProvider(urls ...string) (cipher.KeyProvider, error) {
-	cleaned := util.TrimEmpty(urls)
+	cleaned := strutil.TrimEmpty(urls)
 	if len(cleaned) == 0 {
 		return nil, fmt.Errorf("cipher/azkv: at least one URL required")
 	}

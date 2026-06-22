@@ -36,7 +36,7 @@ import (
 	sopspgp "github.com/getsops/sops/v3/pgp"
 
 	"github.com/dcadolph/cipher"
-	"github.com/dcadolph/cipher/internal/util"
+	"github.com/dcadolph/cipher/internal/strutil"
 )
 
 // Provider is a cipher.KeyProvider that wraps each GPG fingerprint in a
@@ -52,7 +52,7 @@ type Provider struct {
 // malformed. Each fingerprint must be 40 hex characters (an optional
 // "0x" prefix and inner whitespace are accepted and normalized away).
 func NewProvider(fingerprints ...string) (cipher.KeyProvider, error) {
-	cleaned := util.TrimEmpty(fingerprints)
+	cleaned := strutil.TrimEmpty(fingerprints)
 	if len(cleaned) == 0 {
 		return nil, fmt.Errorf("cipher/pgp: at least one fingerprint required")
 	}

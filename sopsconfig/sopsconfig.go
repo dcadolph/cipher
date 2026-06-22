@@ -114,10 +114,12 @@ func (c *Config) Router(kmsContext map[string]string) cipher.Router {
 				return nil, cipher.EncoderOptions{},
 					fmt.Errorf("%w: %q", cipher.ErrNoMatchingRule, path)
 			}
-			return nil, cipher.EncoderOptions{}, fmt.Errorf("sopsconfig: load rule for %q: %w", path, err)
+			return nil, cipher.EncoderOptions{},
+				fmt.Errorf("sopsconfig: load rule for %q: %w", path, err)
 		}
 		if cfg == nil || len(cfg.KeyGroups) == 0 {
-			return nil, cipher.EncoderOptions{}, fmt.Errorf("%w: %q", cipher.ErrNoMatchingRule, path)
+			return nil, cipher.EncoderOptions{},
+				fmt.Errorf("%w: %q", cipher.ErrNoMatchingRule, path)
 		}
 		kp := cipher.StaticKeyProvider(cfg.KeyGroups...)
 		opts := cipher.EncoderOptions{

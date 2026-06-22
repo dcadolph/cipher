@@ -60,7 +60,7 @@ import (
 	"github.com/getsops/sops/v3/keys"
 
 	"github.com/dcadolph/cipher"
-	"github.com/dcadolph/cipher/internal/util"
+	"github.com/dcadolph/cipher/internal/strutil"
 )
 
 // Provider is a cipher.KeyProvider that produces a single sops.KeyGroup
@@ -77,7 +77,7 @@ type Provider struct {
 // Empty/whitespace-only entries are dropped. Returns an error if no
 // usable recipients remain.
 func NewProvider(recipients ...string) (cipher.KeyProvider, error) {
-	cleaned := util.TrimEmpty(recipients)
+	cleaned := strutil.TrimEmpty(recipients)
 	if len(cleaned) == 0 {
 		return nil, fmt.Errorf("cipher/age: at least one recipient required")
 	}

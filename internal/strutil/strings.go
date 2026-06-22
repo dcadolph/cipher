@@ -1,8 +1,8 @@
-// Package util holds tiny helpers shared across cipher subpackages
+// Package strutil holds tiny helpers shared across cipher subpackages
 // that would otherwise be reimplemented (or already were) in each
 // provider package. Everything here is intentionally small: anything
 // non-trivial belongs in a dedicated package.
-package util
+package strutil
 
 import "strings"
 

@@ -20,6 +20,7 @@ linters:
     - gosec
     - govet
     - ineffassign
+    - lll
     - misspell
     - nakedret
     - nilerr
@@ -36,6 +37,9 @@ linters:
     - wastedassign
     - whitespace
   settings:
+    lll:
+      line-length: 100
+      tab-width: 4
     misspell:
       locale: US
     gosec:
@@ -81,6 +85,7 @@ linters:
           - errcheck
           - dupl
           - gocritic
+          - lll
           - noctx
           - prealloc
           - tparallel

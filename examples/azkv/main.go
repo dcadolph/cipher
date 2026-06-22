@@ -36,7 +36,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("encode: %v", err)
 	}
-	fmt.Printf("encrypted via %d Azure Key Vault key(s), %d ciphertext bytes\n", len(urls), len(ciphertext))
+	fmt.Printf("encrypted via %d Azure Key Vault key(s), %d ciphertext bytes\n",
+		len(urls), len(ciphertext))
 
 	roundTrip, err := dec.Decode(ctx, "secrets.yaml", ciphertext)
 	if err != nil {

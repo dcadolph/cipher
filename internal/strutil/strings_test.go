@@ -1,4 +1,4 @@
-package util_test
+package strutil_test
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
-	"github.com/dcadolph/cipher/internal/util"
+	"github.com/dcadolph/cipher/internal/strutil"
 )
 
 // TestTrimEmpty exercises the trim-and-drop helper across whitespace,
@@ -34,7 +34,7 @@ func TestTrimEmpty(t *testing.T) {
 	for testNum, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			t.Parallel()
-			got := util.TrimEmpty(test.In)
+			got := strutil.TrimEmpty(test.In)
 			if diff := cmp.Diff(test.WantList, got, cmpopts.EquateEmpty()); diff != "" {
 				t.Errorf("test %d %s mismatch (-want +got):\n%s", testNum, test.Name, diff)
 			}
@@ -67,7 +67,7 @@ func TestSplitCSV(t *testing.T) {
 	for testNum, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			t.Parallel()
-			got := util.SplitCSV(test.In)
+			got := strutil.SplitCSV(test.In)
 			if diff := cmp.Diff(test.WantList, got, cmpopts.EquateEmpty()); diff != "" {
 				t.Errorf("test %d %s mismatch (-want +got):\n%s", testNum, test.Name, diff)
 			}

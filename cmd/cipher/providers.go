@@ -12,7 +12,7 @@ import (
 	cipherage "github.com/dcadolph/cipher/age"
 	"github.com/dcadolph/cipher/azkv"
 	"github.com/dcadolph/cipher/gcpkms"
-	"github.com/dcadolph/cipher/internal/util"
+	"github.com/dcadolph/cipher/internal/strutil"
 	"github.com/dcadolph/cipher/kms"
 	"github.com/dcadolph/cipher/pgp"
 	"github.com/dcadolph/cipher/sopsconfig"
@@ -88,7 +88,7 @@ func (p *providerFlags) encoderOptions() cipher.EncoderOptions {
 func (p *providerFlags) keyProvider() (cipher.KeyProvider, error) {
 	var providers []cipher.KeyProvider
 	if p.age != "" {
-		kp, err := cipherage.NewProvider(util.SplitCSV(p.age)...)
+		kp, err := cipherage.NewProvider(strutil.SplitCSV(p.age)...)
 		if err != nil {
 			return nil, err
 		}
@@ -100,35 +100,35 @@ func (p *providerFlags) keyProvider() (cipher.KeyProvider, error) {
 			return nil, err
 		}
 		opts := kms.ProviderOptions{EncryptionContext: ctx, Profile: p.awsProf}
-		kp, err := kms.NewProvider(opts, util.SplitCSV(p.kms)...)
+		kp, err := kms.NewProvider(opts, strutil.SplitCSV(p.kms)...)
 		if err != nil {
 			return nil, err
 		}
 		providers = append(providers, kp)
 	}
 	if p.gcpkms != "" {
-		kp, err := gcpkms.NewProvider(util.SplitCSV(p.gcpkms)...)
+		kp, err := gcpkms.NewProvider(strutil.SplitCSV(p.gcpkms)...)
 		if err != nil {
 			return nil, err
 		}
 		providers = append(providers, kp)
 	}
 	if p.vault != "" {
-		kp, err := vault.NewProvider(util.SplitCSV(p.vault)...)
+		kp, err := vault.NewProvider(strutil.SplitCSV(p.vault)...)
 		if err != nil {
 			return nil, err
 		}
 		providers = append(providers, kp)
 	}
 	if p.azkv != "" {
-		kp, err := azkv.NewProvider(util.SplitCSV(p.azkv)...)
+		kp, err := azkv.NewProvider(strutil.SplitCSV(p.azkv)...)
 		if err != nil {
 			return nil, err
 		}
 		providers = append(providers, kp)
 	}
 	if p.pgp != "" {
-		kp, err := pgp.NewProvider(util.SplitCSV(p.pgp)...)
+		kp, err := pgp.NewProvider(strutil.SplitCSV(p.pgp)...)
 		if err != nil {
 			return nil, err
 		}

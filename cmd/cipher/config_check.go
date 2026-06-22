@@ -127,7 +127,8 @@ func checkRule(index int, rule rawCreationRule) []string {
 	if rule.PathRegex == "" {
 		problems = append(problems, prefix+": path_regex is empty")
 	} else if _, err := regexp.Compile(rule.PathRegex); err != nil {
-		problems = append(problems, fmt.Sprintf("%s: path_regex %q: %v", prefix, rule.PathRegex, err))
+		problems = append(problems,
+			fmt.Sprintf("%s: path_regex %q: %v", prefix, rule.PathRegex, err))
 	}
 	if rule.EncryptedRegex != "" {
 		if _, err := regexp.Compile(rule.EncryptedRegex); err != nil {
@@ -148,24 +149,31 @@ func checkRule(index int, rule rawCreationRule) []string {
 		groupCount += countGroupRecipients(g)
 	}
 	if inlineCount+groupCount == 0 {
-		problems = append(problems, prefix+": no recipients (no age/kms/gcp_kms/pgp/azure_keyvault/vault and no key_groups)")
+		problems = append(problems, prefix+
+			": no recipients (no age/kms/gcp_kms/pgp/azure_keyvault/vault, no key_groups)")
 	}
 
 	problems = append(problems, validateCSVRecipients(prefix, "age", rule.Age, nil)...)
 	problems = append(problems, validateCSVRecipients(prefix, "kms", rule.KMS, kmsValidator)...)
-	problems = append(problems, validateCSVRecipients(prefix, "gcp_kms", rule.GCPKMS, gcpkmsValidator)...)
+	problems = append(problems,
+		validateCSVRecipients(prefix, "gcp_kms", rule.GCPKMS, gcpkmsValidator)...)
 	problems = append(problems, validateCSVRecipients(prefix, "pgp", rule.PGP, pgpValidator)...)
-	problems = append(problems, validateCSVRecipients(prefix, "azure_keyvault", rule.AzureKV, azkvValidator)...)
-	problems = append(problems, validateCSVRecipients(prefix, "hc_vault_transit_uri", rule.HCVault, vaultValidator)...)
+	problems = append(problems,
+		validateCSVRecipients(prefix, "azure_keyvault", rule.AzureKV, azkvValidator)...)
+	problems = append(problems,
+		validateCSVRecipients(prefix, "hc_vault_transit_uri", rule.HCVault, vaultValidator)...)
 
 	for gi, g := range rule.KeyGroups {
 		gPrefix := fmt.Sprintf("%s.key_groups[%d]", prefix, gi)
 		problems = append(problems, validateRecipients(gPrefix, "age", g.Age, nil)...)
 		problems = append(problems, validateRecipients(gPrefix, "kms", g.KMS, kmsValidator)...)
-		problems = append(problems, validateRecipients(gPrefix, "gcp_kms", g.GCPKMS, gcpkmsValidator)...)
+		problems = append(problems,
+			validateRecipients(gPrefix, "gcp_kms", g.GCPKMS, gcpkmsValidator)...)
 		problems = append(problems, validateRecipients(gPrefix, "pgp", g.PGP, pgpValidator)...)
-		problems = append(problems, validateRecipients(gPrefix, "azure_keyvault", g.AzureKV, azkvValidator)...)
-		problems = append(problems, validateRecipients(gPrefix, "hc_vault_transit_uri", g.HCVault, vaultValidator)...)
+		problems = append(problems,
+			validateRecipients(gPrefix, "azure_keyvault", g.AzureKV, azkvValidator)...)
+		problems = append(problems,
+			validateRecipients(gPrefix, "hc_vault_transit_uri", g.HCVault, vaultValidator)...)
 	}
 
 	if rule.ShamirThreshold != 0 && rule.ShamirThreshold > len(rule.KeyGroups) {
@@ -181,7 +189,11 @@ func checkRule(index int, rule rawCreationRule) []string {
 // types) on a rule.
 func countRecipients(rule rawCreationRule) int {
 	n := 0
-	for _, csv := range []string{rule.Age, rule.KMS, rule.GCPKMS, rule.PGP, rule.AzureKV, rule.HCVault} {
+	csvFields := []string{
+		rule.Age, rule.KMS, rule.GCPKMS,
+		rule.PGP, rule.AzureKV, rule.HCVault,
+	}
+	for _, csv := range csvFields {
 		for _, v := range strings.Split(csv, ",") {
 			if strings.TrimSpace(v) != "" {
 				n++
@@ -235,7 +247,9 @@ func validateCSVRecipients(prefix, field, csv string, validate recipientValidato
 
 // validateRecipients runs each entry through validate and returns a
 // problem string per invalid entry.
-func validateRecipients(prefix, field string, entries []string, validate recipientValidator) []string {
+func validateRecipients(
+	prefix, field string, entries []string, validate recipientValidator,
+) []string {
 	var problems []string
 	for _, raw := range entries {
 		id := strings.TrimSpace(raw)
