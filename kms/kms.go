@@ -87,12 +87,32 @@ type Provider struct {
 }
 
 // NewProvider returns a cipher.KeyProvider for the given AWS KMS ARNs
-// using opts to configure credentials and encryption context. Pass a
-// zero-valued ProviderOptions when no extra configuration is needed.
-// Empty/whitespace-only ARN entries are dropped. Returns an error if
-// no usable ARNs remain, any ARN is malformed, the role ARN is
-// malformed, or the encryption context fails validation.
-func NewProvider(opts ProviderOptions, arns ...string) (cipher.KeyProvider, error) {
+// using default credential chain and no encryption context. Mirrors
+// the NewProvider shape of the other cipher backends. Use
+// NewProviderWith when an encryption context, role, or profile is
+// required.
+func NewProvider(arns ...string) (cipher.KeyProvider, error) {
+	return NewProviderWith(ProviderOptions{}, arns...)
+}
+
+// MustNewProvider wraps NewProvider and panics on error. Mirrors
+// regexp.MustCompile and template.Must from the standard library.
+func MustNewProvider(arns ...string) cipher.KeyProvider {
+	kp, err := NewProvider(arns...)
+	if err != nil {
+		panic(err)
+	}
+	return kp
+}
+
+// NewProviderWith returns a cipher.KeyProvider for the given AWS KMS
+// ARNs using opts to configure credentials and encryption context.
+// Pass a zero-valued ProviderOptions when no extra configuration is
+// needed (or use NewProvider). Empty/whitespace-only ARN entries are
+// dropped. Returns an error if no usable ARNs remain, any ARN is
+// malformed, the role ARN is malformed, or the encryption context
+// fails validation.
+func NewProviderWith(opts ProviderOptions, arns ...string) (cipher.KeyProvider, error) {
 	cleaned := strutil.TrimEmpty(arns)
 	if len(cleaned) == 0 {
 		return nil, fmt.Errorf("cipher/kms: at least one ARN required")
@@ -113,12 +133,9 @@ func NewProvider(opts ProviderOptions, arns ...string) (cipher.KeyProvider, erro
 	return &Provider{ARNs: cleaned, Options: opts}, nil
 }
 
-// MustNewProvider wraps NewProvider and panics on error. Mirrors
-// regexp.MustCompile and template.Must from the standard library:
-// use only at init-time or in tests where construction failure is a
-// developer error.
-func MustNewProvider(opts ProviderOptions, arns ...string) cipher.KeyProvider {
-	kp, err := NewProvider(opts, arns...)
+// MustNewProviderWith wraps NewProviderWith and panics on error.
+func MustNewProviderWith(opts ProviderOptions, arns ...string) cipher.KeyProvider {
+	kp, err := NewProviderWith(opts, arns...)
 	if err != nil {
 		panic(err)
 	}

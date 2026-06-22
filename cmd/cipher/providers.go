@@ -100,7 +100,7 @@ func (p *providerFlags) keyProvider() (cipher.KeyProvider, error) {
 			return nil, err
 		}
 		opts := kms.ProviderOptions{EncryptionContext: ctx, Profile: p.awsProf}
-		kp, err := kms.NewProvider(opts, strutil.SplitCSV(p.kms)...)
+		kp, err := kms.NewProviderWith(opts, strutil.SplitCSV(p.kms)...)
 		if err != nil {
 			return nil, err
 		}

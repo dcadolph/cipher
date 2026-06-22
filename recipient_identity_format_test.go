@@ -48,7 +48,6 @@ func TestRecipientIdentityFormat(t *testing.T) {
 			Want: "arn:aws:kms:us-east-1:111122223333:key/abcd1234-ef56-7890-abcd-ef1234567890",
 			Build: func() (cipher.KeyProvider, error) {
 				return kms.NewProvider(
-					kms.ProviderOptions{},
 					"arn:aws:kms:us-east-1:111122223333:key/abcd1234-ef56-7890-abcd-ef1234567890",
 				)
 			},
