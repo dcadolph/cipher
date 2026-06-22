@@ -40,7 +40,7 @@ import (
 	sopsgcpkms "github.com/getsops/sops/v3/gcpkms"
 
 	"github.com/dcadolph/cipher"
-	"github.com/dcadolph/cipher/internal/util"
+	"github.com/dcadolph/cipher/internal/strutil"
 )
 
 // Provider is a cipher.KeyProvider that wraps each GCP KMS resource ID
@@ -58,7 +58,7 @@ type Provider struct {
 // projects/<p>/locations/<l>/keyRings/<r>/cryptoKeys/<k>, with an
 // optional /cryptoKeyVersions/<v> suffix.
 func NewProvider(resourceIDs ...string) (cipher.KeyProvider, error) {
-	cleaned := util.TrimEmpty(resourceIDs)
+	cleaned := strutil.TrimEmpty(resourceIDs)
 	if len(cleaned) == 0 {
 		return nil, fmt.Errorf("cipher/gcpkms: at least one resource ID required")
 	}

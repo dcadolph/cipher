@@ -60,7 +60,7 @@ import (
 	sopskms "github.com/getsops/sops/v3/kms"
 
 	"github.com/dcadolph/cipher"
-	"github.com/dcadolph/cipher/internal/util"
+	"github.com/dcadolph/cipher/internal/strutil"
 )
 
 // ProviderOptions tunes Provider construction.
@@ -93,7 +93,7 @@ type Provider struct {
 // no usable ARNs remain, any ARN is malformed, the role ARN is
 // malformed, or the encryption context fails validation.
 func NewProvider(opts ProviderOptions, arns ...string) (cipher.KeyProvider, error) {
-	cleaned := util.TrimEmpty(arns)
+	cleaned := strutil.TrimEmpty(arns)
 	if len(cleaned) == 0 {
 		return nil, fmt.Errorf("cipher/kms: at least one ARN required")
 	}
