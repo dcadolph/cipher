@@ -76,7 +76,7 @@ func (p *providerFlags) encoderOptions() cipher.EncoderOptions {
 		UnencryptedRegex:  p.unencryptedRegex,
 		EncryptedSuffix:   p.encryptedSuffix,
 		UnencryptedSuffix: p.unencryptedSuffix,
-		MACOnlyEncrypted:  p.macOnlyEncrypted,
+		MAC:               macModeFromFlag(p.macOnlyEncrypted),
 		ShamirThreshold:   p.shamirThreshold,
 	}
 }
@@ -181,6 +181,17 @@ func (p *providerFlags) resolveEncoder(_ *cobra.Command) (cipher.Encoder, error)
 }
 
 // parseAWSContext converts repeated `key=value` flag entries into the
+// macModeFromFlag maps the --mac-only-encrypted bool flag to a
+// MACMode. The CLI runs a single encoder per invocation, so the
+// inherit state does not apply here: false maps to MACOnAll, true
+// maps to MACOnEncrypted.
+func macModeFromFlag(macOnlyEncrypted bool) cipher.MACMode {
+	if macOnlyEncrypted {
+		return cipher.MACOnEncrypted
+	}
+	return cipher.MACOnAll
+}
+
 // map[string]string sops's KMS context expects.
 func parseAWSContext(in []string) (map[string]string, error) {
 	if len(in) == 0 {

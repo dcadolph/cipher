@@ -29,6 +29,25 @@ func (f EncoderFunc) Encode(ctx context.Context, path string, data []byte) ([]by
 	return f(ctx, path, data)
 }
 
+// MACMode controls which leaves are covered by the file MAC.
+type MACMode int
+
+const (
+	// MACInherit defers to the base or parent setting. Zero value.
+	// In a router-driven config a rule with MACInherit picks up the
+	// Encoder default. In a single-encoder config MACInherit means
+	// the sops default (MACOnAll).
+	MACInherit MACMode = iota
+	// MACOnAll computes the MAC over every leaf, encrypted or not.
+	// This is the sops default and the safer choice for tamper
+	// detection on the unencrypted parts of the file.
+	MACOnAll
+	// MACOnEncrypted computes the MAC over encrypted leaves only.
+	// Use when you intentionally let plaintext leaves change without
+	// invalidating the MAC.
+	MACOnEncrypted
+)
+
 // EncoderOptions tunes the behavior of an Encoder created with NewEncoderWith.
 type EncoderOptions struct {
 	// Format, when non-zero, fixes the format for every Encode call.
@@ -42,8 +61,11 @@ type EncoderOptions struct {
 	EncryptedSuffix string
 	// UnencryptedSuffix excludes keys with this suffix from encryption.
 	UnencryptedSuffix string
-	// MACOnlyEncrypted reduces MAC computation to encrypted leaves.
-	MACOnlyEncrypted bool
+	// MAC controls which leaves the file MAC covers. Zero value
+	// (MACInherit) defers to base in a router or to the sops default.
+	// Set MACOnAll or MACOnEncrypted to lock the mode for this Encoder
+	// and let router rules override either direction.
+	MAC MACMode
 	// ShamirThreshold is the number of key groups required to recover
 	// the data key. Zero means the sops default.
 	ShamirThreshold int
@@ -110,7 +132,7 @@ func NewEncoderWith(kp KeyProvider, opts EncoderOptions) Encoder {
 			UnencryptedRegex:  opts.UnencryptedRegex,
 			EncryptedSuffix:   opts.EncryptedSuffix,
 			UnencryptedSuffix: opts.UnencryptedSuffix,
-			MACOnlyEncrypted:  opts.MACOnlyEncrypted,
+			MACOnlyEncrypted:  opts.MAC == MACOnEncrypted,
 			ShamirThreshold:   opts.ShamirThreshold,
 		})
 		switch {
