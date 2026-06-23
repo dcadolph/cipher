@@ -13,6 +13,7 @@ All notable changes to cipher are recorded here. The format follows [Keep a Chan
 
 - `recipient_identity_format_test.go` pins the `ToString()` format that `RemoveRecipient` uses, per backend. A sops upgrade that changes the format breaks CI here.
 - Doc note on `KeyProvider.KeyGroups` clarifying that `ctx` is currently ignored by built-in providers and will be honored once sops master keys plumb context through.
+- Vault Transit integration test under the `integration` build tag. CI runs it on every PR against a dev vault container so real encrypt and decrypt are exercised end to end.
 
 ### Fixed
 
