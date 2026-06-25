@@ -245,6 +245,18 @@ Decrypt yes, with the standard `sops` binary. Encrypt also yes. The on-disk form
 
 Pre-1.0. The on-disk format is the SOPS format and stays compatible. The Go API may break between minor versions until 1.0. Lock to an exact module version if you ship a binary.
 
+## Roadmap
+
+cipher is pre-1.0. The on disk format is the sops format and stays compatible across releases. The Go API may break between minor versions until 1.0 lands.
+
+Open work for the road to 1.0:
+
+- Real round trip integration coverage for GCP KMS and Azure Key Vault. Both backends currently rely on shape and identity format tests because no usable open source emulator exists for either.
+- Stabilize the EncoderOptions surface so a 1.0 tag freezes the public API.
+- Land cipher in homebrew core so brew install cipher works without the tap.
+
+Open an issue or a PR if you want to push any of these forward.
+
 ## Docs
 
 | Surface | Covers |
