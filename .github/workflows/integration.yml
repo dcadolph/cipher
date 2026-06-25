@@ -39,3 +39,70 @@ jobs:
       - name: Stop vault
         if: always()
         run: docker stop vault || true
+
+  pgp:
+    name: pgp
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.x"
+          check-latest: true
+
+      - name: Verify gpg
+        run: gpg --version
+
+      - name: Run pgp integration tests
+        run: go test -tags integration -v ./pgp/...
+
+  kms:
+    name: kms
+    runs-on: ubuntu-latest
+    env:
+      AWS_ENDPOINT_URL: http://localhost:4566
+      AWS_ENDPOINT_URL_KMS: http://localhost:4566
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: us-east-1
+      AWS_DEFAULT_REGION: us-east-1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.x"
+          check-latest: true
+
+      - name: Start localstack
+        run: |
+          docker run -d --name localstack \
+            -p 4566:4566 \
+            -e SERVICES=kms \
+            -e DEFAULT_REGION=us-east-1 \
+            localstack/localstack
+
+      - name: Wait for localstack
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:4566/_localstack/health > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "localstack did not become ready"
+          docker logs localstack
+          exit 1
+
+      - name: Create kms key
+        run: |
+          ARN=$(aws kms create-key --query 'KeyMetadata.Arn' --output text)
+          echo "CIPHER_TEST_KMS_ARN=$ARN" >> "$GITHUB_ENV"
+
+      - name: Run kms integration tests
+        run: go test -tags integration -v ./kms/...
+
+      - name: Stop localstack
+        if: always()
+        run: docker stop localstack || true
