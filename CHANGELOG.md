@@ -6,6 +6,13 @@ All notable changes to cipher are recorded here. The format follows [Keep a Chan
 
 ### Added
 
+- Godoc examples for every cloud backend and for httpmw. Each package now renders runnable snippets on pkg.go.dev.
+- Fuzz tests for `MatchExt`, `MatchGlob`, and `MatchRegex`. Targets must never panic regardless of input.
+
+## v0.2.1 (2026-06-24)
+
+### Added
+
 - Round trip integration tests for the pgp backend using a throwaway gpg keyring and the aws kms backend using a localstack container. CI runs both on every pull request so real api drift is caught early.
 
 ## v0.2.0 (2026-06-24)
