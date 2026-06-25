@@ -81,7 +81,7 @@ jobs:
             -p 4566:4566 \
             -e SERVICES=kms \
             -e DEFAULT_REGION=us-east-1 \
-            localstack/localstack
+            localstack/localstack:3
 
       - name: Wait for localstack
         run: |
