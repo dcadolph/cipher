@@ -9,9 +9,11 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/dcadolph/cipher)](https://goreportcard.com/report/github.com/dcadolph/cipher)
 [![License](https://img.shields.io/github/license/dcadolph/cipher.svg)](LICENSE)
 
-Programmatic [SOPS](https://github.com/getsops/sops), from Go. Encrypt, decrypt, rotate, walk, edit, and audit secret files with one library and one CLI.
+Programmatic [SOPS](https://github.com/getsops/sops), from Go. One library and one CLI for encrypt, decrypt, rotate, walk, edit, and audit. Drop in next to your existing sops files and keep going.
 
 ![cipher demo](assets/demo.gif)
+
+Every release is exercised end to end against real Vault Transit, AWS KMS through LocalStack, and a fresh PGP keyring. The on disk format is the standard sops format, so the upstream sops binary reads what cipher writes.
 
 ## What you can do
 
@@ -28,12 +30,13 @@ Programmatic [SOPS](https://github.com/getsops/sops), from Go. Encrypt, decrypt,
 
 | Tool | Best for | Tradeoff |
 |------|----------|----------|
-| **cipher** | Secrets committed to git, multi-backend, Go integration, audit and drift checks, pre-commit hook. | Pre-1.0. Go API may break between minor versions. |
-| raw `sops` CLI | Secrets in git, single binary, no Go required. | No directory walker. Go API ships decrypt only. |
-| HashiCorp Vault | Runtime secrets fetched server-side. | Server to run and maintain. |
-| AWS Secrets Manager | AWS-native runtime secrets with IAM. | AWS lock-in. Runtime only. |
+| **cipher** | Secrets committed to git plus Go integration, parallel directory walks, audit and drift checks, and a pre-commit hook. | Pre-1.0. Go API may break between minor versions. |
+| raw `sops` CLI | Secrets in git when one file at a time is enough and no Go consumer needs an encrypt API. | No directory walker. The sops Go API only decrypts. |
+| HashiCorp Vault | Runtime secrets your app fetches over the network on each request. | Server to run and maintain. |
+| AWS Secrets Manager | AWS native runtime secrets resolved by IAM. | AWS lock in. Runtime only. |
+| Azure Key Vault | Azure native runtime secrets. | Azure lock in. Runtime only. |
 
-Pick cipher when secrets live in your repo and you want a small library plus a CLI that work the same in Go code, CI, and your editor. Pick Vault or Secrets Manager when secrets live in a server and applications fetch them at runtime.
+Pick cipher when the secrets live in your repo and you want one tool that behaves the same way from Go code, from CI, and from your editor. Pick Vault or one of the managed runtime stores when the secrets live in a server and the app fetches them at runtime.
 
 ## Quickstart
 
@@ -241,6 +244,18 @@ Decrypt yes, with the standard `sops` binary. Encrypt also yes. The on-disk form
 **Is the API stable?**
 
 Pre-1.0. The on-disk format is the SOPS format and stays compatible. The Go API may break between minor versions until 1.0. Lock to an exact module version if you ship a binary.
+
+## Roadmap
+
+cipher is pre-1.0. The on disk format is the sops format and stays compatible across releases. The Go API may break between minor versions until 1.0 lands.
+
+Open work for the road to 1.0:
+
+- Real round trip integration coverage for GCP KMS and Azure Key Vault. Both backends currently rely on shape and identity format tests because no usable open source emulator exists for either.
+- Stabilize the EncoderOptions surface so a 1.0 tag freezes the public API.
+- Land cipher in homebrew core so brew install cipher works without the tap.
+
+Open an issue or a PR if you want to push any of these forward.
 
 ## Docs
 
