@@ -222,3 +222,62 @@ func TestDecryptRequestBodyStripsTransferEncoding(t *testing.T) {
 		t.Errorf("Content-Encoding header = %q, want empty", gotCEHdr)
 	}
 }
+
+// TestEncryptResponseBodyPropagatesHeaders covers the bufferedWriter
+// Header method and copyHeader by having the inner handler set a
+// custom header that must reach the client unchanged.
+func TestEncryptResponseBodyPropagatesHeaders(t *testing.T) {
+	kp, _ := ciphertest.NewProvider(t)
+	enc := cipher.NewEncoder(kp)
+	inner := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("X-Cipher-Test", "yes")
+		w.Header().Add("X-Cipher-Multi", "one")
+		w.Header().Add("X-Cipher-Multi", "two")
+		_, _ = w.Write([]byte("api_key: hunter2\n"))
+	})
+	wrapped := httpmw.EncryptResponseBody(enc, httpmw.DefaultPathFunc)(inner)
+	req := httptest.NewRequest("GET", "/x.yaml", nil)
+	rec := httptest.NewRecorder()
+	wrapped.ServeHTTP(rec, req)
+	if got := rec.Header().Get("X-Cipher-Test"); got != "yes" {
+		t.Errorf("X-Cipher-Test = %q, want yes", got)
+	}
+	if got := rec.Header().Values("X-Cipher-Multi"); len(got) != 2 {
+		t.Errorf("X-Cipher-Multi = %v, want two values", got)
+	}
+}
+
+// TestWithLoggerSetsLogger ensures the option installs the supplied
+// logger. The default is cipher.NopLogger which would never print, so
+// we install a logger that records calls and then trigger an error to
+// confirm it fires.
+func TestWithLoggerSetsLogger(t *testing.T) {
+	dec := cipher.NewDecoder()
+	rec := &recordingLogger{}
+	mw := httpmw.DecryptRequestBody(
+		dec, httpmw.DefaultPathFunc, httpmw.WithLogger(rec),
+	)
+	inner := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})
+	wrapped := mw(inner)
+	req := httptest.NewRequest("POST", "/x.yaml", strings.NewReader("not encrypted"))
+	rr := httptest.NewRecorder()
+	wrapped.ServeHTTP(rr, req)
+	if rec.warns == 0 {
+		t.Error("logger Warnf was not called on decode failure")
+	}
+}
+
+// recordingLogger counts Warnf calls. Satisfies cipher.Logger.
+type recordingLogger struct{ warns int }
+
+// Debugf is a no op.
+func (l *recordingLogger) Debugf(string, ...any) {}
+
+// Infof is a no op.
+func (l *recordingLogger) Infof(string, ...any) {}
+
+// Warnf records that a warning was logged.
+func (l *recordingLogger) Warnf(string, ...any) { l.warns++ }
+
+// Errorf is a no op.
+func (l *recordingLogger) Errorf(string, ...any) {}
