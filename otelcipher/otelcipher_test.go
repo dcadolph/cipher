@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/getsops/sops/v3"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -117,6 +118,73 @@ func TestWrapKeyProviderEmitsSpan(t *testing.T) {
 		t.Fatalf("spans = %+v", spans)
 	}
 }
+
+// TestWrapDecoderRecordsErrors verifies the decode error path sets
+// Error status on the span and records the error.
+func TestWrapDecoderRecordsErrors(t *testing.T) {
+	rec, tp := newTracer(t)
+	dec := otelcipher.WrapDecoder(cipher.NewDecoder(), tp.Tracer("test"))
+	_, err := dec.Decode(context.Background(), "x.yaml", []byte("not a sops file"))
+	if err == nil {
+		t.Fatal("Decode err = nil, want error")
+	}
+	spans := rec.Ended()
+	if len(spans) != 1 || spans[0].Name() != "cipher.Decode" {
+		t.Fatalf("spans = %+v", spans)
+	}
+	if spans[0].Status().Code != codes.Error {
+		t.Errorf("status code = %v, want Error", spans[0].Status().Code)
+	}
+}
+
+// TestWrapKeyProviderRecordsErrors verifies the KeyGroups error path
+// sets Error status on the span and records the underlying error.
+func TestWrapKeyProviderRecordsErrors(t *testing.T) {
+	rec, tp := newTracer(t)
+	errKP := cipher.KeyProviderFunc(func(context.Context) ([]sops.KeyGroup, error) {
+		return nil, errFakeKP
+	})
+	wrapped := otelcipher.WrapKeyProvider(errKP, tp.Tracer("test"))
+	_, err := wrapped.KeyGroups(context.Background())
+	if !errors.Is(err, errFakeKP) {
+		t.Fatalf("KeyGroups err = %v, want errFakeKP", err)
+	}
+	spans := rec.Ended()
+	if len(spans) != 1 || spans[0].Name() != "cipher.KeyGroups" {
+		t.Fatalf("spans = %+v", spans)
+	}
+	if spans[0].Status().Code != codes.Error {
+		t.Errorf("status code = %v, want Error", spans[0].Status().Code)
+	}
+}
+
+// TestWrapNilPanics confirms each wrapper panics when its required
+// argument is nil. Mirrors the documented contract.
+func TestWrapNilPanics(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		Name string
+		Run  func()
+	}{
+		{"encoder", func() { otelcipher.WrapEncoder(nil, nil) }},
+		{"decoder", func() { otelcipher.WrapDecoder(nil, nil) }},
+		{"keyprovider", func() { otelcipher.WrapKeyProvider(nil, nil) }},
+	}
+	for i, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			defer func() {
+				if recover() == nil {
+					t.Errorf("Test %d (%s): expected panic", i, test.Name)
+				}
+			}()
+			test.Run()
+		})
+	}
+}
+
+// errFakeKP is a sentinel error returned by the failing KeyProvider
+// in the error path test.
+var errFakeKP = errors.New("otelcipher_test: synthetic key provider error")
 
 // kvValue extracts a comparable Go value from an OTel attribute.
 func kvValue(kv attribute.KeyValue) any {
