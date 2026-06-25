@@ -4,6 +4,19 @@ All notable changes to cipher are recorded here. The format follows [Keep a Chan
 
 ## Unreleased
 
+### Changed
+
+- README tagline leads with the drop in pitch and surfaces the integration coverage CI runs on every release. Comparison table gained an Azure Key Vault row and tightened the cipher row to spell out what it is for.
+- New Roadmap section names what is left for 1.0: real round trip integration for GCP KMS and Azure Key Vault, the EncoderOptions API freeze, and the homebrew core submission.
+
+## v0.2.3 (2026-06-25)
+
+### Added
+
+- Test coverage gains across four packages. otelcipher 73 to 93, sopsconfig 75 to 86, httpmw 83 to 89, cmd cipher 63 to 66.
+
+## v0.2.2 (2026-06-24)
+
 ### Added
 
 - Godoc examples for every cloud backend and for httpmw. Each package now renders runnable snippets on pkg.go.dev.
