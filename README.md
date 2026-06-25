@@ -135,20 +135,24 @@ Refuses any staged file that matches a `.sops.yaml` rule but is still plaintext.
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    code["Your Go code / CLI"] --> enc["cipher Encoder / Decoder"]
-    enc --> sops["getsops/sops Go API"]
-    enc --> kp["cipher.KeyProvider"]
-    kp --> age[("age")]
-    kp --> kms[("AWS KMS")]
-    kp --> gcp[("GCP KMS")]
-    kp --> vault[("Vault Transit")]
-    kp --> azkv[("Azure Key Vault")]
-    kp --> pgp[("PGP")]
+```
+Your Go code or CLI
+        |
+        v
+cipher.Encoder / cipher.Decoder  ----->  getsops/sops Go API
+        |
+        v
+cipher.KeyProvider
+        |
+        +--> age
+        +--> AWS KMS
+        +--> GCP KMS
+        +--> Vault Transit
+        +--> Azure Key Vault
+        +--> PGP
 ```
 
-cipher is a thin Go layer over the [SOPS](https://github.com/getsops/sops) Go API. Each backend implements `cipher.KeyProvider` and reads credentials the same way the `sops` binary does. The on-disk format is the SOPS format, so anything that decrypts SOPS files (including the upstream `sops` binary) reads what cipher writes.
+cipher is a thin Go layer over the [SOPS](https://github.com/getsops/sops) Go API. Each backend implements `cipher.KeyProvider` and reads credentials the same way the `sops` binary does. The on disk format is the SOPS format, so anything that decrypts SOPS files (including the upstream `sops` binary) reads what cipher writes.
 
 ## Concepts
 
