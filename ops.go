@@ -88,24 +88,21 @@ func EditWith(
 	if err != nil {
 		return fmt.Errorf("decode %q: %w", path, err)
 	}
-	// Best-effort zero of the plaintext slice cipher owns. This wipes
-	// only the final decoded buffer, not the upstream copies sops built
-	// inside EmitPlainFile, store buffers, and
-	// GenerateDataKeyWithKeyServices. Those live in freed-but-not-zeroed
-	// heap memory until the next allocator reuse and cipher cannot
-	// reach them. The wipe still narrows the window of accidental
-	// disclosure for the slice we hand back to the mutator, but it is
-	// not a guarantee that plaintext is unrecoverable from process
-	// memory after Edit returns.
+	// Zero the plaintext slice cipher owns. This wipes only the final
+	// decoded buffer, not the upstream copies sops built inside
+	// EmitPlainFile, store buffers, and GenerateDataKeyWithKeyServices.
+	// Those live in freed-but-not-zeroed heap memory until the next
+	// allocator reuse and cipher cannot reach them. The wipe narrows
+	// the window of accidental disclosure for the slice we hand back
+	// to the mutator. It does not guarantee plaintext is unrecoverable
+	// from process memory after Edit returns.
 	defer clear(plaintext)
 
 	modified, err := fn(plaintext)
 	if err != nil {
 		return fmt.Errorf("edit %q: %w", path, err)
 	}
-	// Modified may share storage with plaintext (in-place edit) or be
-	// a fresh slice from the mutator. Best-effort zero of the slice
-	// cipher sees, with the same caveat as the plaintext wipe above:
+	// Zero the slice cipher sees. Same caveat as the plaintext wipe:
 	// if the mutator returned a fresh slice, the original backing
 	// array is already unreferenced and clear does nothing for it.
 	defer clear(modified)

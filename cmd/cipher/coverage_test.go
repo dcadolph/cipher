@@ -299,8 +299,8 @@ func TestEncoderOptionsThreadThrough(t *testing.T) {
 	if got.UnencryptedSuffix != "_plain" {
 		t.Errorf("UnencryptedSuffix = %q, want %q", got.UnencryptedSuffix, "_plain")
 	}
-	if !got.MACOnlyEncrypted {
-		t.Error("MACOnlyEncrypted = false, want true")
+	if got.MAC != cipher.MACOnEncrypted {
+		t.Errorf("MAC = %d, want MACOnEncrypted", got.MAC)
 	}
 	if got.ShamirThreshold != 2 {
 		t.Errorf("ShamirThreshold = %d, want 2", got.ShamirThreshold)

@@ -18,13 +18,13 @@ func TestNewProviderRejectsEmpty(t *testing.T) {
 	t.Parallel()
 	t.Run("no args", func(t *testing.T) {
 		t.Parallel()
-		if _, err := kms.NewProvider(kms.ProviderOptions{}); err == nil {
+		if _, err := kms.NewProvider(); err == nil {
 			t.Fatal("err = nil, want at-least-one-ARN error")
 		}
 	})
 	t.Run("only whitespace", func(t *testing.T) {
 		t.Parallel()
-		if _, err := kms.NewProvider(kms.ProviderOptions{}, " ", ""); err == nil {
+		if _, err := kms.NewProvider(" ", ""); err == nil {
 			t.Fatal("err = nil, want at-least-one-ARN error")
 		}
 	})
@@ -39,14 +39,14 @@ func TestMustNewProviderPanicsOnEmpty(t *testing.T) {
 			t.Fatal("expected panic on no ARNs")
 		}
 	}()
-	_ = kms.MustNewProvider(kms.ProviderOptions{})
+	_ = kms.MustNewProvider()
 }
 
 // TestKeyGroupsShape verifies KeyGroups produces a single group with
 // one master key per ARN.
 func TestKeyGroupsShape(t *testing.T) {
 	t.Parallel()
-	kp := kms.MustNewProvider(kms.ProviderOptions{}, testARN1, testARN2)
+	kp := kms.MustNewProvider(testARN1, testARN2)
 	groups, err := kp.KeyGroups(context.Background())
 	if err != nil {
 		t.Fatalf("KeyGroups: %v", err)
@@ -68,7 +68,7 @@ func TestNewProviderWithOptions(t *testing.T) {
 		Profile:           "test-profile",
 		Role:              "arn:aws:iam::111111111111:role/test-role",
 	}
-	kp := kms.MustNewProvider(opts, testARN1)
+	kp := kms.MustNewProviderWith(opts, testARN1)
 	groups, err := kp.KeyGroups(context.Background())
 	if err != nil {
 		t.Fatalf("KeyGroups: %v", err)
@@ -105,7 +105,7 @@ func TestNewProviderValidatesARN(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			t.Parallel()
-			_, err := kms.NewProvider(kms.ProviderOptions{}, test.In)
+			_, err := kms.NewProvider(test.In)
 			if (err != nil) != test.Want {
 				t.Errorf("err = %v, wantErr = %v", err, test.Want)
 			}
@@ -116,7 +116,7 @@ func TestNewProviderValidatesARN(t *testing.T) {
 // TestNewProviderRejectsBadRole verifies the role-ARN validation path.
 func TestNewProviderRejectsBadRole(t *testing.T) {
 	t.Parallel()
-	_, err := kms.NewProvider(
+	_, err := kms.NewProviderWith(
 		kms.ProviderOptions{Role: "arn:aws:iam::111111111111:user/test"},
 		testARN1,
 	)
@@ -150,7 +150,7 @@ func TestNewProviderValidatesEncryptionContext(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			t.Parallel()
-			_, err := kms.NewProvider(
+			_, err := kms.NewProviderWith(
 				kms.ProviderOptions{EncryptionContext: test.Ctx},
 				testARN1,
 			)

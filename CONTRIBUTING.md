@@ -27,10 +27,11 @@ Run `make help` for every available target.
 |----------|---------|--------------|
 | [test](.github/workflows/test.yml) | push to `main`, pull request | `go test ./...` on Linux and macOS with Go 1.25.x. Coverage uploaded to [Codecov](https://codecov.io/gh/dcadolph/cipher). |
 | [lint](.github/workflows/lint.yml) | push to `main`, pull request | `golangci-lint run`. |
+| [integration](.github/workflows/integration.yml) | push to `main`, pull request | Starts a dev vault container, runs the `integration` tag tests against it. |
 | [bench](.github/workflows/bench.yml) | manual dispatch, push to `main` that touches Go files | Runs the benchmark suite and posts the output. |
 | [release](.github/workflows/release.yml) | tag push matching `v*` | GoReleaser builds binaries, publishes the GitHub release, pushes the Homebrew cask. See [RELEASING.md](RELEASING.md). |
 
-Run the same checks locally before opening a pull request to avoid round trips.
+Run the same checks locally before opening a pull request to avoid round trips. Integration tests need a running vault and the `integration` build tag, e.g. `VAULT_ADDR=http://localhost:8200 VAULT_TOKEN=root go test -tags integration ./vault/`.
 
 ## Codecov setup (one time)
 

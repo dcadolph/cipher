@@ -23,7 +23,7 @@ func main() {
 	}
 	arns := strings.Split(os.Getenv("AWS_KMS_ARNS"), ",")
 
-	provider, err := kms.NewProvider(kms.ProviderOptions{
+	provider, err := kms.NewProviderWith(kms.ProviderOptions{
 		Profile: os.Getenv("AWS_PROFILE"),
 		EncryptionContext: map[string]string{
 			"app":         "cipher-example",

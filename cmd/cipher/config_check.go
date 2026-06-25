@@ -215,7 +215,7 @@ type recipientValidator func(id string) error
 
 var (
 	kmsValidator = func(id string) error {
-		_, err := kms.NewProvider(kms.ProviderOptions{}, id)
+		_, err := kms.NewProvider(id)
 		return err
 	}
 	gcpkmsValidator = func(id string) error {

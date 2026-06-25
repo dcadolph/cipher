@@ -127,7 +127,7 @@ func (c *Config) Router(kmsContext map[string]string) cipher.Router {
 			UnencryptedRegex:  cfg.UnencryptedRegex,
 			EncryptedSuffix:   cfg.EncryptedSuffix,
 			UnencryptedSuffix: cfg.UnencryptedSuffix,
-			MACOnlyEncrypted:  cfg.MACOnlyEncrypted,
+			MAC:               macModeFromBool(cfg.MACOnlyEncrypted),
 			ShamirThreshold:   cfg.ShamirThreshold,
 		}
 		return kp, opts, nil
@@ -151,6 +151,18 @@ func (c *Config) MatchesAnyRule(path string, kmsContext map[string]string) (bool
 // error into a signal we can wrap with cipher.ErrNoMatchingRule.
 func isNoMatchErr(err error) bool {
 	return err != nil && strings.Contains(err.Error(), "no matching creation rules")
+}
+
+// macModeFromBool maps the legacy bool field from .sops.yaml to the
+// MACMode tri-state. A .sops.yaml rule can only set true (encrypted
+// leaves only) or false (default sops MAC over all leaves); rules
+// cannot express MACInherit because the config file format has no
+// such notion.
+func macModeFromBool(macOnlyEncrypted bool) cipher.MACMode {
+	if macOnlyEncrypted {
+		return cipher.MACOnEncrypted
+	}
+	return cipher.MACOnAll
 }
 
 // toPtrMap converts a string map to the *string map sops requires for

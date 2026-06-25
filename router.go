@@ -147,13 +147,9 @@ func MergeProviders(providers ...KeyProvider) KeyProvider {
 
 // mergeEncoderOptions returns the result of overlaying rule fields onto
 // base. Non-zero/non-empty fields in rule win, zero fields fall through
-// to base.
-//
-// Boolean fields (currently MACOnlyEncrypted) follow the same
-// zero-is-inherit rule. A rule can enable MACOnlyEncrypted on top of a
-// base that did not set it, but cannot disable a base that did. If
-// per-rule disabling is needed, set MACOnlyEncrypted to false at the
-// Encoder level and enable it only on the rules that want it.
+// to base. MAC uses the same rule: MACInherit means inherit from base,
+// MACOnAll or MACOnEncrypted overrides. A rule can therefore flip the
+// MAC mode in either direction.
 func mergeEncoderOptions(base, rule EncoderOptions) EncoderOptions {
 	out := base
 	if rule.Format != 0 {
@@ -171,8 +167,8 @@ func mergeEncoderOptions(base, rule EncoderOptions) EncoderOptions {
 	if rule.UnencryptedSuffix != "" {
 		out.UnencryptedSuffix = rule.UnencryptedSuffix
 	}
-	if rule.MACOnlyEncrypted {
-		out.MACOnlyEncrypted = rule.MACOnlyEncrypted
+	if rule.MAC != MACInherit {
+		out.MAC = rule.MAC
 	}
 	if rule.ShamirThreshold != 0 {
 		out.ShamirThreshold = rule.ShamirThreshold
