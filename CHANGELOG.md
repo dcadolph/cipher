@@ -2,12 +2,15 @@
 
 All notable changes to cipher are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v0.2.4 (2026-07-06)
 
 ### Changed
 
 - README tagline leads with the drop in pitch and surfaces the integration coverage CI runs on every release. Comparison table gained an Azure Key Vault row and tightened the cipher row to spell out what it is for.
 - New Roadmap section names what is left for 1.0: real round trip integration for GCP KMS and Azure Key Vault, the EncoderOptions API freeze, and the homebrew core submission.
+- README architecture diagram is now a plain ASCII tree instead of Mermaid so it renders everywhere.
+- Code modernized with `go fix`: integer `range` loops, `slices.Contains` over hand rolled loops, `strings.SplitSeq` to skip a slice allocation, and redundant loop variable copies removed.
+- Toolchain refresh: Go 1.26.4, all dependencies updated, CI runs Go 1.26.x, golangci-lint pinned to v2.12.2.
 
 ## v0.2.3 (2026-06-25)
 
