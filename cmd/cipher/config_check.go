@@ -194,7 +194,7 @@ func countRecipients(rule rawCreationRule) int {
 		rule.PGP, rule.AzureKV, rule.HCVault,
 	}
 	for _, csv := range csvFields {
-		for _, v := range strings.Split(csv, ",") {
+		for v := range strings.SplitSeq(csv, ",") {
 			if strings.TrimSpace(v) != "" {
 				n++
 			}

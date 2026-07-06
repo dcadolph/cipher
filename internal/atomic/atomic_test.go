@@ -236,7 +236,7 @@ func TestWriteFileConcurrent(t *testing.T) {
 	const workers = 32
 	var wg sync.WaitGroup
 	errs := make([]error, workers)
-	for i := 0; i < workers; i++ {
+	for i := range workers {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()

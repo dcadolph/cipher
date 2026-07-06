@@ -188,7 +188,7 @@ func BenchmarkEncodeWalkParallelism(b *testing.B) {
 
 	prepFS := func() afero.Fs {
 		fs := afero.NewMemMapFs()
-		for i := 0; i < fileCount; i++ {
+		for i := range fileCount {
 			path := filepath.Join("/root", fmt.Sprintf("f%03d.yaml", i))
 			if err := afero.WriteFile(fs, path, data, 0o600); err != nil {
 				b.Fatalf("seed: %v", err)
