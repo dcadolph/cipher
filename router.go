@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/getsops/sops/v3"
 	"github.com/getsops/sops/v3/keyservice"
@@ -189,13 +190,7 @@ func appendUniqueKS(
 ) []keyservice.KeyServiceClient {
 	out := append([]keyservice.KeyServiceClient(nil), a...)
 	for _, x := range b {
-		dup := false
-		for _, y := range out {
-			if x == y {
-				dup = true
-				break
-			}
-		}
+		dup := slices.Contains(out, x)
 		if !dup {
 			out = append(out, x)
 		}

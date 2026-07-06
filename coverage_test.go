@@ -582,7 +582,7 @@ func TestEncodeWalkParallelMany(t *testing.T) {
 	ctx := context.Background()
 
 	files := afero.NewMemMapFs()
-	for i := 0; i < 16; i++ {
+	for i := range 16 {
 		path := filepath.Join("/root", "f"+itoa(i)+".yaml")
 		if err := afero.WriteFile(files, path, []byte("foo: bar\n"), 0o600); err != nil {
 			t.Fatalf("seed: %v", err)
@@ -607,7 +607,7 @@ func TestEncodeWalkParallelMany(t *testing.T) {
 func TestEncodeWalkParallelCancelOnError(t *testing.T) {
 	t.Parallel()
 	files := afero.NewMemMapFs()
-	for i := 0; i < 8; i++ {
+	for i := range 8 {
 		path := filepath.Join("/root", "f"+itoa(i)+".yaml")
 		if err := afero.WriteFile(files, path, []byte("foo: bar\n"), 0o600); err != nil {
 			t.Fatalf("seed: %v", err)
@@ -630,7 +630,7 @@ func TestEncodeWalkParallelCancelOnError(t *testing.T) {
 func TestEncodeWalkContextCancel(t *testing.T) {
 	t.Parallel()
 	files := afero.NewMemMapFs()
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		path := filepath.Join("/root", "f"+itoa(i)+".yaml")
 		if err := afero.WriteFile(files, path, []byte("foo: bar\n"), 0o600); err != nil {
 			t.Fatalf("seed: %v", err)

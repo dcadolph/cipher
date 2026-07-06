@@ -5,6 +5,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -55,12 +56,7 @@ func MatchExt(exts ...string) FileMatcher {
 	}
 	return FileMatcherFunc(func(p string) bool {
 		ext := strings.ToLower(filepath.Ext(p))
-		for _, e := range norm {
-			if ext == e {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(norm, ext)
 	})
 }
 

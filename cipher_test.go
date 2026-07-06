@@ -242,7 +242,7 @@ func TestEncodeWalkParallel(t *testing.T) {
 	files := afero.NewMemMapFs()
 
 	const n = 12
-	for i := 0; i < n; i++ {
+	for i := range n {
 		p := fmt.Sprintf("root/sub%d/file.yaml", i)
 		if err := afero.WriteFile(files, p, []byte("foo: bar\n"), 0o600); err != nil {
 			t.Fatalf("write %q: %v", p, err)
@@ -257,7 +257,7 @@ func TestEncodeWalkParallel(t *testing.T) {
 		t.Fatalf("EncodeWalkWith: %v", err)
 	}
 
-	for i := 0; i < n; i++ {
+	for i := range n {
 		p := fmt.Sprintf("root/sub%d/file.yaml", i)
 		data, err := afero.ReadFile(files, p)
 		if err != nil {

@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"slices"
 	"strings"
 	"time"
 
@@ -185,12 +186,7 @@ func newDemoMux() (*http.ServeMux, error) {
 
 // isKnownExplainer reports whether slug is in demoExplainers.
 func isKnownExplainer(slug string) bool {
-	for _, s := range demoExplainers {
-		if s == slug {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(demoExplainers, slug)
 }
 
 // openInBrowser launches the user's default browser pointed at url.
