@@ -198,6 +198,6 @@ func kvValue(kv attribute.KeyValue) any {
 	case attribute.FLOAT64:
 		return kv.Value.AsFloat64()
 	default:
-		return kv.Value.Emit()
+		return kv.Value.String()
 	}
 }
