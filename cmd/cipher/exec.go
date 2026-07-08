@@ -164,7 +164,7 @@ func envPairsFromPlaintext(path string, plain []byte) ([]string, error) {
 // blank lines and comments. File order is preserved.
 func parseDotenv(plain []byte) []string {
 	var out []string
-	for _, line := range strings.Split(string(plain), "\n") {
+	for line := range strings.SplitSeq(string(plain), "\n") {
 		trimmed := strings.TrimSpace(line)
 		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
 			continue
