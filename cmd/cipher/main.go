@@ -4,6 +4,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -27,6 +28,8 @@ func init() {
 		newEncryptCmd(),
 		newDecryptCmd(),
 		newEditCmd(),
+		newExecEnvCmd(),
+		newExecFileCmd(),
 		newRotateCmd(),
 		newWalkCmd(),
 		newAddRecipientCmd(),
@@ -43,10 +46,39 @@ func init() {
 
 func main() {
 	if err := rootCmd.Execute(); err != nil {
+		var ee *exitError
+		if errors.As(err, &ee) {
+			if ee.err != nil {
+				fmt.Fprintln(os.Stderr, "error:", ee.err)
+			}
+			os.Exit(ee.code)
+		}
 		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
 	}
 }
+
+// exitError carries an explicit process exit code up to main. It is
+// used by the exec verbs to propagate a child process exit code. When
+// err is nil the child already reported its own failure, so main exits
+// with code and prints nothing.
+type exitError struct {
+	// err is an optional message printed to stderr before exit.
+	err error
+	// code is the process exit code to return.
+	code int
+}
+
+// Error reports the exit code, and the wrapped message when present.
+func (e *exitError) Error() string {
+	if e.err != nil {
+		return e.err.Error()
+	}
+	return fmt.Sprintf("exit status %d", e.code)
+}
+
+// Unwrap returns the wrapped error for errors.Is and errors.As.
+func (e *exitError) Unwrap() error { return e.err }
 
 // newVersionCmd returns the `cipher version` subcommand.
 func newVersionCmd() *cobra.Command {

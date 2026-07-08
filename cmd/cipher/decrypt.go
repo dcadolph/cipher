@@ -13,7 +13,7 @@ import (
 // standard env-based locations.
 func newDecryptCmd() *cobra.Command {
 	var inPlace bool
-	var output string
+	var output, extract string
 	cmd := &cobra.Command{
 		Use:   "decrypt PATH",
 		Short: "Decrypt a single sops-encrypted file",
@@ -29,6 +29,15 @@ func newDecryptCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("decrypt %q: %w", path, err)
 			}
+			if extract != "" {
+				if inPlace {
+					return fmt.Errorf("--extract is incompatible with --in-place")
+				}
+				plain, err = extractValue(path, plain, extract)
+				if err != nil {
+					return fmt.Errorf("decrypt %q: %w", path, err)
+				}
+			}
 			switch {
 			case inPlace && path == "-":
 				return fmt.Errorf("--in-place is incompatible with stdin (path \"-\")")
@@ -43,5 +52,7 @@ func newDecryptCmd() *cobra.Command {
 	}
 	cmd.Flags().BoolVarP(&inPlace, "in-place", "i", false, "write plaintext back to PATH")
 	cmd.Flags().StringVarP(&output, "output", "o", "", "write plaintext to this path")
+	cmd.Flags().StringVar(&extract, "extract", "",
+		`extract a sub-value by path, e.g. '["db"]["password"]' or '["hosts"][0]'`)
 	return cmd
 }
