@@ -13,6 +13,8 @@ go install github.com/dcadolph/cipher/cmd/cipher@latest
 | [encrypt](#encrypt) | Encrypt a single file. |
 | [decrypt](#decrypt) | Decrypt a single file. |
 | [edit](#edit) | Decrypt, open in your text editor, re-encrypt. |
+| [exec-env](#exec-env) | Decrypt into the environment and run a command. |
+| [exec-file](#exec-file) | Decrypt to a temp file and run a command against it. |
 | [rotate](#rotate) | Generate a fresh data key for a file. |
 | [walk](#walk) | Apply encrypt, decrypt, or rotate across a directory. |
 | [add-recipient](#add-recipient) | Add recipients without re-encrypting the payload. |
@@ -98,8 +100,12 @@ cipher encrypt secrets.yaml --kms arn:aws:kms:... --kms-context env=prod
 Decrypt a single file. Identity comes from the same environment the [SOPS](https://github.com/getsops/sops) binary reads. See [Identity sources](#identity-sources) below.
 
 ```sh
-cipher decrypt PATH [-i | -o FILE]
+cipher decrypt PATH [-i | -o FILE] [--extract PATH-EXPR]
 ```
+
+| Flag | Description |
+|------|-------------|
+| `--extract` | Print one sub-value instead of the whole file. Path form: `["key"]` for map keys, `[N]` for array indexes, chained. Scalars print raw; maps and slices re-encode in the file format. Not valid with `-i`. |
 
 Examples:
 
@@ -107,6 +113,8 @@ Examples:
 cipher decrypt secrets.yaml
 cipher decrypt secrets.yaml -o plain.yaml
 cipher decrypt - < encrypted.yaml > plain.yaml
+cipher decrypt secrets.yaml --extract '["db"]["password"]'
+cipher decrypt secrets.yaml --extract '["hosts"][0]'
 ```
 
 ## edit
@@ -131,6 +139,48 @@ cipher edit secrets.yaml --age age1qyqsz... --backup-suffix .bak
 ```
 
 Security model: plaintext is materialized only in a fresh `0700` temp directory in a `0600` file, removed best-effort when the editor exits. The editor command runs through `/bin/sh`. Do not pass untrusted `$EDITOR` values.
+
+## exec-env
+
+Decrypt PATH, load its key/value pairs into the environment, and run COMMAND through `/bin/sh` with those variables added. The command exit code becomes the cipher exit code. Identity comes from the same environment [decrypt](#decrypt) uses.
+
+```sh
+cipher exec-env PATH COMMAND
+```
+
+PATH must be a `.env`, `.yaml`, or `.json` file. YAML and JSON must hold a flat map of scalar values. Existing environment variables are preserved; the decrypted pairs are added on top.
+
+Examples:
+
+```sh
+cipher exec-env secrets.env 'node server.js'
+cipher exec-env secrets.yaml 'psql -c "\dt"'
+cipher exec-env - < encrypted.env 'printenv DB_PASSWORD'
+```
+
+Security model: the decrypted secrets live in the child process environment. On most systems a same-user process can read another process environment (for example through `/proc` on Linux). Do not use exec-env where the threat model includes co-tenant processes running as the same user.
+
+## exec-file
+
+Decrypt PATH to a private temp file and run COMMAND through `/bin/sh`, replacing the first `{}` with the temp file path. When COMMAND has no `{}`, the path is appended. The command exit code becomes the cipher exit code.
+
+```sh
+cipher exec-file PATH COMMAND [--filename NAME]
+```
+
+| Flag | Description |
+|------|-------------|
+| `--filename` | Name for the decrypted temp file. Defaults to the base name of PATH. |
+
+Examples:
+
+```sh
+cipher exec-file secrets.yaml 'kubectl apply -f {}'
+cipher exec-file config.json 'my-app --config {}'
+cipher exec-file secrets.yaml --filename app.yaml 'cat {}'
+```
+
+Security model: plaintext is written to a `0600` file in a fresh `0700` temp directory, removed best-effort when the command exits. Co-tenants with root access can read the file while the command runs.
 
 ## rotate
 
